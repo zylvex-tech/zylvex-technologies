@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: spatial-canvas-db
+    environment:
+      POSTGRES_USER: spatialcanvas
+      POSTGRES_PASSWORD: spatialcanvas123
+      POSTGRES_DB: spatialcanvas
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spatialcanvas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - spatial-network
+
+  backend:
+    build: ./backend
+    container_name: spatial-canvas-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://spatialcanvas:spatialcanvas123@postgres:5432/spatialcanvas
+      JWT_SECRET_KEY: your-super-secret-jwt-key-change-in-production
+      ENVIRONMENT: development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    networks:
+      - spatial-network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+networks:
+  spatial-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
