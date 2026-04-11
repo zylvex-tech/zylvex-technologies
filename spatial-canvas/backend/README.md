@@ -194,3 +194,60 @@ spatial-canvas/backend/
 ## License
 
 Proprietary - © Zylvex Technologies Ltd
+
+## Authentication Integration
+
+SPATIAL CANVAS now integrates with the shared JWT authentication service.
+
+### New Authentication Flow
+
+1. **User Registration/Login**: Users must register/login via the auth service
+2. **Token-Based Authentication**: All protected endpoints require Bearer tokens
+3. **User Ownership**: Anchors are associated with authenticated users
+
+### Protected Endpoints
+
+- `POST /api/v1/anchors` - Create anchor (requires authentication)
+- `GET /api/v1/anchors/mine` - Get user's anchors (requires authentication)
+- `DELETE /api/v1/anchors/{id}` - Delete anchor (requires ownership)
+
+### Public Endpoints
+
+- `GET /api/v1/anchors` - Get nearby anchors (public)
+- `GET /api/v1/anchors/{id}` - Get specific anchor (public)
+
+### Docker Compose Setup
+
+The updated docker-compose.yml includes:
+
+1. **PostgreSQL with PostGIS** - Spatial database
+2. **SPATIAL CANVAS Backend** - Main application on port 8000
+3. **Auth Service** - Shared authentication service on port 8001
+
+To start all services:
+```bash
+docker-compose up
+```
+
+### Environment Variables
+
+Key environment variables:
+- `AUTH_SERVICE_URL` - URL of the auth service (default: http://localhost:8001)
+- `DATABASE_URL` - PostgreSQL connection string
+- `SECRET_KEY` - JWT signing secret
+
+### Testing the Integration
+
+Run the test script:
+```bash
+./test_auth_integration.sh
+```
+
+### Mobile App Integration
+
+The mobile app must:
+1. Include login/register screens
+2. Store JWT tokens securely
+3. Include tokens in API requests
+
+See `spatial-canvas/mobile/README.md` for mobile app updates.
