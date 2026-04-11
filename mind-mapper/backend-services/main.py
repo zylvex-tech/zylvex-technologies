@@ -11,6 +11,7 @@ from schemas import (
     NodeCreate, NodeResponse,
     SessionCreate, SessionResponse
 )
+from endpoints import router as api_router
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -26,6 +27,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include API routes
+app.include_router(api_router, prefix="/api/v1")
+
 @app.get("/")
 def read_root():
     return {"message": "Mind Mapper API", "version": "1.0.0"}
@@ -34,7 +38,6 @@ def read_root():
 def health_check():
     return {"status": "healthy"}
 
-# MindMap endpoints will be added in next step
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8002)
