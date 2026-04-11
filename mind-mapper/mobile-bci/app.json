@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "Spatial Canvas",
+    "slug": "spatial-canvas",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zylvex.spatialcanvas",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to place AR anchors in the real world.",
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to save and retrieve spatial anchors.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app uses your location to save and retrieve spatial anchors."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ],
+      "package": "com.zylvex.spatialcanvas"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Spatial Canvas to access your camera to place AR anchors."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Spatial Canvas to use your location to save and retrieve spatial anchors."
+        }
+      ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "your-project-id-here"
+      }
+    }
+  }
+}
