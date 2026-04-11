@@ -1,0 +1,58 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.txt'
+      - '.github/**'
+
+jobs:
+  deploy-auth:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Auth Service
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            cd /opt/zylvex/shared/auth
+            git pull origin main
+            docker-compose down
+            docker-compose up -d --build
+            echo "Auth service deployed successfully"
+
+  deploy-spatial-canvas:
+    runs-on: ubuntu-latest
+    needs: deploy-auth
+    steps:
+      - name: Deploy Spatial Canvas Backend
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            cd /opt/zylvex/spatial-canvas/backend
+            git pull origin main
+            docker-compose down
+            docker-compose up -d --build
+            echo "Spatial Canvas backend deployed successfully"
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [deploy-auth, deploy-spatial-canvas]
+    if: always()
+    steps:
+      - name: Send Slack notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          author_name: GitHub Actions
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: env.SLACK_WEBHOOK_URL
