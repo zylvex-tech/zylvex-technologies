@@ -1,0 +1,95 @@
+name: Spatial Canvas Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'spatial-canvas/backend/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'spatial-canvas/backend/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:15-3.4-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: spatial_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        working-directory: ./spatial-canvas/backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      - name: Run tests with coverage
+        working-directory: ./spatial-canvas/backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/spatial_test
+          JWT_SECRET: test-secret-key-for-ci
+          AUTH_SERVICE_URL: http://localhost:8001
+        run: |
+          pytest tests/ -v --cov=app --cov-report=xml --cov-report=term
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./spatial-canvas/backend/coverage.xml
+          flags: spatial-canvas-backend
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        working-directory: ./spatial-canvas/backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install black flake8 isort
+      - name: Check formatting with black
+        working-directory: ./spatial-canvas/backend
+        run: black --check .
+      - name: Lint with flake8
+        working-directory: ./spatial-canvas/backend
+        run: flake8 .
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        working-directory: ./spatial-canvas/backend
+        run: docker build -t spatial-canvas-backend:ci .
+      - name: Test Docker image
+        working-directory: ./spatial-canvas/backend
+        run: |
+          docker run -d --name spatial-ci-test \
+            -e DATABASE_URL=postgresql://postgres:postgres@postgres:5432/spatial_test \
+            -e JWT_SECRET=test-secret \
+            -e AUTH_SERVICE_URL=http://auth-service:8001 \
+            -p 8000:8000 \
+            spatial-canvas-backend:ci
+          sleep 10
+          curl -f http://localhost:8000/health || exit 1
+          docker stop spatial-ci-test
+          docker rm spatial-ci-test
