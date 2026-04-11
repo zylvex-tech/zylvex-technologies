@@ -1,0 +1,87 @@
+name: Mobile App CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'spatial-canvas/mobile/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'spatial-canvas/mobile/**'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: spatial-canvas/mobile/package-lock.json
+      - name: Install dependencies
+        working-directory: ./spatial-canvas/mobile
+        run: npm ci
+      - name: Run ESLint
+        working-directory: ./spatial-canvas/mobile
+        run: npx eslint .
+
+  type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: spatial-canvas/mobile/package-lock.json
+      - name: Install dependencies
+        working-directory: ./spatial-canvas/mobile
+        run: npm ci
+      - name: Create tsconfig.json if missing
+        working-directory: ./spatial-canvas/mobile
+        run: |
+          if [ ! -f tsconfig.json ]; then
+            cat > tsconfig.json << 'TS_CONFIG'
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "lib": ["es2020"],
+    "jsx": "react-native",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true
+  },
+  "exclude": ["node_modules", "babel.config.js", "metro.config.js", "jest.config.js"]
+}
+TS_CONFIG
+          fi
+      - name: Run TypeScript type check
+        working-directory: ./spatial-canvas/mobile
+        run: npx tsc --noEmit
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: spatial-canvas/mobile/package-lock.json
+      - name: Install dependencies
+        working-directory: ./spatial-canvas/mobile
+        run: npm ci
+      - name: Run tests
+        working-directory: ./spatial-canvas/mobile
+        run: npm test -- --watchAll=false
