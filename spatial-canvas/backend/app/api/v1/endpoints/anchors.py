@@ -63,17 +63,21 @@ def get_anchors_nearby(
     latitude: float = Query(..., ge=-90, le=90, description="Latitude in decimal degrees"),
     longitude: float = Query(..., ge=-180, le=180, description="Longitude in decimal degrees"),
     radius_km: float = Query(1.0, ge=0.1, le=100, description="Search radius in kilometers"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db)
 ):
     """Get anchors within radius of a location."""
     try:
         logger.info(f"Searching anchors near ({latitude}, {longitude}) within {radius_km}km")
-        
+
         anchors = AnchorService.get_anchors_nearby(
             db=db,
             latitude=latitude,
             longitude=longitude,
-            radius_km=radius_km
+            radius_km=radius_km,
+            skip=skip,
+            limit=limit,
         )
         
         # Convert to response models with owner names

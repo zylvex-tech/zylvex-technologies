@@ -10,7 +10,8 @@ import {
   RefreshControl,
 } from 'react-native';
 import * as Location from 'expo-location';
-import { apiService, authService } from '../services/auth';
+import { anchorAPI } from '../services/api';
+import { authService } from '../services/auth';
 
 const NearbyScreen = ({ navigation }) => {
   const [location, setLocation] = useState(null);
@@ -54,7 +55,7 @@ const NearbyScreen = ({ navigation }) => {
   const fetchNearbyAnchors = async () => {
     try {
       setLoading(true);
-      const result = await apiService.getNearbyAnchors(
+      const result = await anchorAPI.getNearbyAnchors(
         location.coords.latitude,
         location.coords.longitude,
         1.0 // 1km radius
@@ -71,7 +72,7 @@ const NearbyScreen = ({ navigation }) => {
   const fetchUserAnchors = async () => {
     try {
       if (isAuthenticated) {
-        const result = await apiService.getMyAnchors();
+        const result = await anchorAPI.getMyAnchors();
         setUserAnchors(result || []);
       }
     } catch (error) {
@@ -99,7 +100,7 @@ const NearbyScreen = ({ navigation }) => {
           style: 'destructive',
           onPress: async () => {
             try {
-              await apiService.deleteAnchor(anchorId);
+              await anchorAPI.deleteAnchor(anchorId);
               Alert.alert('Success', 'Anchor deleted successfully');
               // Refresh lists
               fetchNearbyAnchors();

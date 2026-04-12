@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  postgres-auth:
+    image: postgres:15-alpine
+    container_name: zylvex-auth-db
+    environment:
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_pass
+      POSTGRES_DB: auth_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [zylvex]
+
+  postgres-spatial:
+    image: postgis/postgis:15-3.4-alpine
+    container_name: zylvex-spatial-db
+    environment:
+      POSTGRES_USER: spatial_user
+      POSTGRES_PASSWORD: spatial_pass
+      POSTGRES_DB: spatial_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spatial_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [zylvex]
+
+  postgres-mm:
+    image: postgres:15-alpine
+    container_name: zylvex-mm-db
+    environment:
+      POSTGRES_USER: mm_user
+      POSTGRES_PASSWORD: mm_pass
+      POSTGRES_DB: mm_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mm_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [zylvex]
+
+  auth-service:
+    build: ./shared/auth
+    container_name: zylvex-auth
+    depends_on:
+      postgres-auth:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://auth_user:auth_pass@postgres-auth:5432/auth_db
+      JWT_SECRET: local-dev-secret-change-in-production
+      ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:8081,exp://localhost:8081"
+    ports: ["8001:8001"]
+    networks: [zylvex]
+
+  spatial-canvas-backend:
+    build: ./spatial-canvas/backend
+    container_name: zylvex-spatial
+    depends_on:
+      postgres-spatial:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://spatial_user:spatial_pass@postgres-spatial:5432/spatial_db
+      JWT_SECRET_KEY: local-dev-secret-change-in-production
+      AUTH_SERVICE_URL: http://auth-service:8001
+      ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:8081"
+    ports: ["8000:8000"]
+    networks: [zylvex]
+
+  mind-mapper-backend:
+    build: ./mind-mapper/backend-services
+    container_name: zylvex-mm
+    depends_on:
+      postgres-mm:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://mm_user:mm_pass@postgres-mm:5432/mm_db
+      AUTH_SERVICE_URL: http://auth-service:8001
+      ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:8081"
+    ports: ["8002:8002"]
+    networks: [zylvex]
+
+networks:
+  zylvex:
+    name: zylvex-network

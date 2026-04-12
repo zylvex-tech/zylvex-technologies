@@ -1,10 +1,9 @@
 import axios from 'axios';
 import { getToken } from './auth';
-
-const API_BASE_URL = 'http://localhost:8002/api/v1';
+import { API_BASE_URL } from '../config';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: `${API_BASE_URL}/api/v1`,
   timeout: 10000,
 });
 
@@ -39,8 +38,23 @@ export const deleteMindMap = async (id: string) => {
   return response.data;
 };
 
+export const getMindMapNodes = async (mindmapId: string) => {
+  const response = await api.get(`/mindmaps/${mindmapId}/nodes`);
+  return response.data;
+};
+
+export const getMindMapSessions = async (mindmapId: string) => {
+  const response = await api.get(`/mindmaps/${mindmapId}/sessions`);
+  return response.data;
+};
+
 export const createNode = async (mindmapId: string, nodeData: any) => {
   const response = await api.post(`/mindmaps/${mindmapId}/nodes`, nodeData);
+  return response.data;
+};
+
+export const updateNode = async (mindmapId: string, nodeId: string, nodeData: any) => {
+  const response = await api.put(`/mindmaps/${mindmapId}/nodes/${nodeId}`, nodeData);
   return response.data;
 };
 

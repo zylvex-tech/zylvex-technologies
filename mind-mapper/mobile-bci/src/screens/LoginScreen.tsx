@@ -16,6 +16,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 
 import { RootStackParamList } from '../../App';
 import { storeToken, storeRefreshToken, storeUserId } from '../services/auth';
+import { AUTH_BASE_URL } from '../config';
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -37,7 +38,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8001/auth/login', {
+      const response = await fetch(`${AUTH_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -56,8 +57,16 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         if (data.refresh_token) {
           await storeRefreshToken(data.refresh_token);
         }
-        if (data.user_id) {
-          await storeUserId(data.user_id);
+
+        // Fetch user profile to get user_id and full_name
+        const meResponse = await fetch(`${AUTH_BASE_URL}/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${data.access_token}`,
+          },
+        });
+        if (meResponse.ok) {
+          const userData = await meResponse.json();
+          await storeUserId(userData.id);
         }
 
         // Navigate to home

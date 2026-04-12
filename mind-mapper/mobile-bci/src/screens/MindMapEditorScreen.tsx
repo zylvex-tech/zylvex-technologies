@@ -7,7 +7,7 @@ import Slider from '@react-native-community/slider';
 
 import { RootStackParamList } from '../../App';
 import { getToken } from '../services/auth';
-import { createNode, deleteNode } from '../services/api';
+import { createNode, deleteNode, getMindMapNodes } from '../services/api';
 
 type MindMapEditorScreenNavigationProp = StackNavigationProp<RootStackParamList, 'MindMapEditor'>;
 type MindMapEditorScreenRouteProp = RouteProp<RootStackParamList, 'MindMapEditor'>;
@@ -28,23 +28,15 @@ type Node = {
 
 const MindMapEditorScreen: React.FC<Props> = ({ navigation, route }) => {
   const { mindmapId, title } = route.params;
-  const [nodes, setNodes] = useState<Node[]>([
-    { id: 'root', text: title, parent_id: null, color: '#4A90E2', font_size: 20, focus_level: 70 },
-  ]);
+  const [nodes, setNodes] = useState<Node[]>([]);
   const [focusLevel, setFocusLevel] = useState(70);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>('root');
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newNodeText, setNewNodeText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(true);
   const [sessionStartTime] = useState(Date.now());
   const [focusTimeline, setFocusTimeline] = useState<number[]>([70]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFocusTimeline(prev => [...prev, focusLevel]);
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [focusLevel]);
 
   const getFocusLabel = (level: number) => {
     if (level > 70) return 'High Focus 🟢';
@@ -63,6 +55,44 @@ const MindMapEditorScreen: React.FC<Props> = ({ navigation, route }) => {
     if (level >= 40) return 16;
     return 14;
   };
+
+  // Load existing nodes on mount
+  useEffect(() => {
+    const loadNodes = async () => {
+      try {
+        const existingNodes = await getMindMapNodes(mindmapId);
+        if (existingNodes && existingNodes.length > 0) {
+          setNodes(existingNodes.map((n: any) => ({
+            id: String(n.id),
+            text: n.text,
+            parent_id: n.parent_id ? String(n.parent_id) : null,
+            color: n.color || '#4A90E2',
+            font_size: getNodeFontSize(n.focus_level),
+            focus_level: n.focus_level,
+          })));
+          setSelectedNodeId(String(existingNodes[0].id));
+        } else {
+          // New mind map — seed a root node placeholder (UI only, not persisted)
+          setNodes([{ id: 'root', text: title, parent_id: null, color: '#4A90E2', font_size: 20, focus_level: 70 }]);
+          setSelectedNodeId('root');
+        }
+      } catch (error) {
+        console.error('Failed to load nodes:', error);
+        setNodes([{ id: 'root', text: title, parent_id: null, color: '#4A90E2', font_size: 20, focus_level: 70 }]);
+        setSelectedNodeId('root');
+      } finally {
+        setInitializing(false);
+      }
+    };
+    loadNodes();
+  }, [mindmapId]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFocusTimeline(prev => [...prev, focusLevel]);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [focusLevel]);
 
   const handleAddNode = async () => {
     if (!selectedNodeId || !newNodeText.trim()) {
@@ -182,6 +212,14 @@ const MindMapEditorScreen: React.FC<Props> = ({ navigation, route }) => {
       )}
     </TouchableOpacity>
   );
+
+  if (initializing) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#4A90E2" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

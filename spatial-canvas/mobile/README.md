@@ -1,78 +1,32 @@
-# Spatial Canvas Mobile App
+# Spatial Canvas Mobile
 
-React Native mobile app for the Spatial Canvas AR platform.
+React Native AR camera app for placing and discovering spatial anchors. Built with Expo.
 
-## Features
+## Prerequisites
 
-- **AR Camera Screen**: Place text/emoji anchors in the real world
-- **Nearby Anchors Screen**: View anchors within 0.5km radius
-- **GPS Integration**: Save and retrieve anchors by location
-- **Cross-platform**: Works on iOS and Android
+- Node 18+
+- Expo CLI: `npm install -g expo-cli`
 
 ## Setup
 
-1. Install dependencies:
 ```bash
 npm install
+cp .env.example .env
 ```
 
-2. Start the backend (in separate terminal):
-```bash
-cd ../backend
-docker-compose up -d
-```
+Edit `.env` to point `EXPO_PUBLIC_API_URL` at the Spatial Canvas API and `EXPO_PUBLIC_AUTH_URL` at the Auth service.
 
-3. Start the mobile app:
-```bash
-npm start
-```
+## Environment
 
-4. Use Expo Go app on your phone to scan QR code, or run on simulator.
+| Variable | Default | Description |
+|---|---|---|
+| `EXPO_PUBLIC_API_URL` | `http://localhost:8000` | Spatial Canvas API base URL |
+| `EXPO_PUBLIC_AUTH_URL` | `http://localhost:8001` | Auth service base URL |
 
-## Screens
-
-### Camera Screen
-- Live camera view
-- Tap to place anchor
-- Input modal for anchor content
-- GPS location capture
-
-### Nearby Anchors Screen
-- Shows anchors within 0.5km
-- Distance and timestamp display
-- Pull-to-refresh
-
-## Environment Variables
-
-Create `.env` file:
-```
-EXPO_PUBLIC_API_URL=http://localhost:8000
-```
-
-## Tech Stack
-
-- React Native
-- Expo (expo-camera, expo-location)
-- React Navigation
-- Axios for API calls
-
-## Development
+## Running
 
 ```bash
-# Start development server
-npm start
-
-# Run on iOS simulator
-npm run ios
-
-# Run on Android emulator
-npm run android
+expo start
 ```
 
-## Backend Integration
-
-The app connects to the Spatial Canvas backend at `EXPO_PUBLIC_API_URL`.
-
-Required endpoints:
-- `POST /api/v1/anchors` - Create anchor
-- `GET /api/v1/anchors` - Get nearby anchors
+Then scan the QR code, or press `a` for Android / `i` for iOS simulator.
