@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.db.session import get_db
 from app.schemas.user import (
@@ -15,10 +17,12 @@ from app.middleware.auth import get_current_user
 from app.models.user import User
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register(user: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def register(request: Request, user: UserCreate, db: Session = Depends(get_db)):
     """Register a new user"""
     try:
         db_user = create_user(db, user)
@@ -32,7 +36,8 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=Token)
-def login(login_data: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def login(request: Request, login_data: LoginRequest, db: Session = Depends(get_db)):
     """Login user and return access + refresh tokens"""
     user = authenticate_user(db, login_data.email, login_data.password)
     if not user:

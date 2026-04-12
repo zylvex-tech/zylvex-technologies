@@ -22,7 +22,7 @@ class MindMapResponse(MindMapBase):
 
 # Node schemas
 class NodeBase(BaseModel):
-    text: str
+    text: str = Field(..., max_length=2000)
     focus_level: int = Field(..., ge=0, le=100)
     color: str
     x: float = 0.0
@@ -31,6 +31,13 @@ class NodeBase(BaseModel):
 
 class NodeCreate(NodeBase):
     pass
+
+class NodeUpdate(BaseModel):
+    text: Optional[str] = Field(None, max_length=2000)
+    color: Optional[str] = None
+    x: Optional[float] = None
+    y: Optional[float] = None
+    focus_level: Optional[int] = Field(None, ge=0, le=100)
 
 class NodeResponse(NodeBase):
     id: uuid.UUID

@@ -32,7 +32,7 @@ services:
       AUTH_SERVICE_URL: http://auth_service:8001
       API_V1_STR: /api/v1
       PROJECT_NAME: SPATIAL CANVAS
-      SECRET_KEY: ${SECRET_KEY:-development-secret-key-change-in-production}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-development-secret-key-change-in-production}
       ACCESS_TOKEN_EXPIRE_MINUTES: 15
       REFRESH_TOKEN_EXPIRE_DAYS: 30
     ports:
@@ -59,7 +59,7 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/auth_service
       API_V1_STR: /api/v1
       PROJECT_NAME: Auth Service
-      SECRET_KEY: ${SECRET_KEY:-development-secret-key-change-in-production}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-development-secret-key-change-in-production}
       ACCESS_TOKEN_EXPIRE_MINUTES: 15
       REFRESH_TOKEN_EXPIRE_DAYS: 30
     ports:
