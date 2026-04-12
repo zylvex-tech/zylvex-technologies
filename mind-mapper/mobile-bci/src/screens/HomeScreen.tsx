@@ -18,6 +18,7 @@ import { RectButton } from 'react-native-gesture-handler';
 import { RootStackParamList } from '../../App';
 import { getMindMaps, deleteMindMap } from '../services/api';
 import { getToken, clearToken } from '../services/auth';
+import { API_BASE_URL } from '../config';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 type HomeScreenRouteProp = RouteProp<RootStackParamList, 'Home'>;
@@ -89,7 +90,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             }
 
             try {
-              const response = await fetch('http://localhost:8002/api/v1/mindmaps', {
+              const response = await fetch(`${API_BASE_URL}/api/v1/mindmaps`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',

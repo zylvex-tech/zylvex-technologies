@@ -45,22 +45,23 @@ class AnchorService:
             raise
     
     @staticmethod
-    def get_anchors_nearby(db: Session, latitude: float, longitude: float, radius_km: float = 1.0) -> list:
+    def get_anchors_nearby(db: Session, latitude: float, longitude: float, radius_km: float = 1.0,
+                           skip: int = 0, limit: int = 100) -> list:
         """Get anchors within radius of a location."""
         try:
-            # Convert km to degrees (approximate)
-            radius_deg = radius_km / 111.0  # 1 degree ≈ 111 km
-            
+            # Convert km to degrees (approximate; 1° ≈ 111 km)
+            radius_deg = radius_km / 111.0
+
             # Create point for distance calculation
             point = WKTElement(f'POINT({longitude} {latitude})', srid=4326)
-            
+
             # Query anchors within radius using PostGIS ST_DWithin
             anchors = db.query(Anchor).filter(
                 func.ST_DWithin(Anchor.location, point, radius_deg)
-            ).order_by(Anchor.created_at.desc()).all()
-            
+            ).order_by(Anchor.created_at.desc()).offset(skip).limit(limit).all()
+
             return anchors
-            
+
         except Exception as e:
             logger.error(f"Error fetching nearby anchors: {str(e)}")
             raise
