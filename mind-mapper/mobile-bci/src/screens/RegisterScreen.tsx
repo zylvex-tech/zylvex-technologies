@@ -15,7 +15,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 import { RootStackParamList } from '../../App';
-import { storeToken, storeRefreshToken, storeUserId } from '../services/auth';
+import { AUTH_BASE_URL } from '../config';
 
 type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Register'>;
 
@@ -41,15 +41,15 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       return;
     }
 
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+    if (password.length < 8) {
+      Alert.alert('Error', 'Password must be at least 8 characters');
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8001/auth/register', {
+      const response = await fetch(`${AUTH_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -64,16 +64,10 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       const data = await response.json();
 
       if (response.ok) {
-        await storeToken(data.access_token);
-        if (data.refresh_token) {
-          await storeRefreshToken(data.refresh_token);
-        }
-        if (data.user_id) {
-          await storeUserId(data.user_id);
-        }
-
-        Alert.alert('Success', 'Account created successfully!', [
-          { text: 'OK', onPress: () => navigation.replace('Home') },
+        // Registration returns a UserResponse, not tokens.
+        // Navigate to Login with a success message.
+        Alert.alert('Account Created', 'Account created! Please sign in.', [
+          { text: 'OK', onPress: () => navigation.replace('Login') },
         ]);
       } else {
         Alert.alert('Registration Failed', data.detail || 'Registration failed');

@@ -12,6 +12,7 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useNavigation } from '@react-navigation/native';
 import { anchorAPI } from '../services/api';
+import { getToken } from '../services/auth';
 import { requestCameraPermission, requestLocationPermission, getCurrentLocation } from '../utils/permissions';
 
 const CameraScreen = () => {
@@ -58,18 +59,15 @@ const CameraScreen = () => {
     
     try {
       const location = await getCurrentLocation();
-      
+
       const anchorData = {
-        user_id: 'demo_user',
         content_type: 'text',
-        content_data: JSON.stringify({ text: anchorContent }),
+        content: anchorContent,
         title: `Anchor: ${anchorContent.substring(0, 20)}${anchorContent.length > 20 ? '...' : ''}`,
-        description: `Placed at ${new Date().toLocaleString()}`,
         latitude: location.latitude,
         longitude: location.longitude,
-        altitude: location.altitude || 0,
       };
-      
+
       await anchorAPI.createAnchor(anchorData);
       
       Alert.alert(
