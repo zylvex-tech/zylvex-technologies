@@ -53,7 +53,7 @@ async def create_mindmap(
 @router.get("/mindmaps", response_model=List[MindMapResponse])
 async def list_mindmaps(
     skip: int = 0,
-    limit: int = Query(100, le=500),
+    limit: int = Query(100, ge=1, le=500),
     user_id: uuid.UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
@@ -91,7 +91,7 @@ async def delete_mindmap(
 async def list_nodes(
     mindmap_id: uuid.UUID,
     skip: int = 0,
-    limit: int = Query(100, le=500),
+    limit: int = Query(100, ge=1, le=500),
     user_id: uuid.UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
@@ -205,7 +205,7 @@ async def delete_node(
 async def list_sessions(
     mindmap_id: uuid.UUID,
     skip: int = 0,
-    limit: int = Query(100, le=500),
+    limit: int = Query(100, ge=1, le=500),
     user_id: uuid.UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):

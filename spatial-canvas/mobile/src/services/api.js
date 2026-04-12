@@ -60,7 +60,7 @@ export const anchorAPI = {
     const response = await makeAuthRequest(`/api/v1/anchors/${anchorId}`, {
       method: 'DELETE',
     });
-    if (response.status !== 204 && !response.ok) {
+    if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || 'Failed to delete anchor');
     }

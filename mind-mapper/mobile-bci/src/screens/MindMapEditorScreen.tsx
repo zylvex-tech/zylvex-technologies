@@ -38,6 +38,24 @@ const MindMapEditorScreen: React.FC<Props> = ({ navigation, route }) => {
   const [sessionStartTime] = useState(Date.now());
   const [focusTimeline, setFocusTimeline] = useState<number[]>([70]);
 
+  const getFocusLabel = (level: number) => {
+    if (level > 70) return 'High Focus 🟢';
+    if (level >= 40) return 'Moderate 🟡';
+    return 'Low Focus 🔴';
+  };
+
+  const getNodeColor = (level: number) => {
+    if (level > 70) return '#4CAF50';
+    if (level >= 40) return '#FFC107';
+    return '#F44336';
+  };
+
+  const getNodeFontSize = (level: number) => {
+    if (level > 70) return 18;
+    if (level >= 40) return 16;
+    return 14;
+  };
+
   // Load existing nodes on mount
   useEffect(() => {
     const loadNodes = async () => {
@@ -75,24 +93,6 @@ const MindMapEditorScreen: React.FC<Props> = ({ navigation, route }) => {
     }, 30000);
     return () => clearInterval(interval);
   }, [focusLevel]);
-
-  const getFocusLabel = (level: number) => {
-    if (level > 70) return 'High Focus 🟢';
-    if (level >= 40) return 'Moderate 🟡';
-    return 'Low Focus 🔴';
-  };
-
-  const getNodeColor = (level: number) => {
-    if (level > 70) return '#4CAF50';
-    if (level >= 40) return '#FFC107';
-    return '#F44336';
-  };
-
-  const getNodeFontSize = (level: number) => {
-    if (level > 70) return 18;
-    if (level >= 40) return 16;
-    return 14;
-  };
 
   const handleAddNode = async () => {
     if (!selectedNodeId || !newNodeText.trim()) {
