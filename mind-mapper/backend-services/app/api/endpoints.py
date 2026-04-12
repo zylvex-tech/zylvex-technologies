@@ -1,18 +1,20 @@
+"""Mind Mapper API endpoints."""
+
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
-from typing import List, Optional
+from typing import List
 import uuid
 from datetime import datetime
 
-from database import get_db
-from models import MindMap, Node, Session as MindMapSession
-from schemas import (
+from app.db.session import get_db
+from app.models.mind_map import MindMap, Node, Session as MindMapSession
+from app.schemas.mind_map import (
     MindMapCreate, MindMapResponse,
     NodeCreate, NodeUpdate, NodeResponse,
-    SessionCreate, SessionResponse
+    SessionCreate, SessionResponse,
 )
-from auth import get_current_user_id
+from app.middleware.auth import get_current_user_id
 
 router = APIRouter()
 
@@ -26,7 +28,7 @@ def _get_owned_mindmap(db: Session, mindmap_id: uuid.UUID, user_id: uuid.UUID) -
     if not mindmap:
         raise HTTPException(
             status_code=404,
-            detail="Mind map not found or you don't have permission"
+            detail="Mind map not found or you don't have permission",
         )
     return mindmap
 
@@ -39,7 +41,7 @@ def _get_owned_mindmap(db: Session, mindmap_id: uuid.UUID, user_id: uuid.UUID) -
 async def create_mindmap(
     mindmap: MindMapCreate,
     user_id: uuid.UUID = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Create a new mind map"""
     db_mindmap = MindMap(user_id=user_id, title=mindmap.title)
@@ -55,7 +57,7 @@ async def list_mindmaps(
     skip: int = 0,
     limit: int = Query(100, ge=1, le=500),
     user_id: uuid.UUID = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """List mind maps for the current user (paginated)"""
     mindmaps = db.query(MindMap).filter(
@@ -74,7 +76,7 @@ async def list_mindmaps(
 async def delete_mindmap(
     mindmap_id: uuid.UUID,
     user_id: uuid.UUID = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Delete a mind map (owner only)"""
     mindmap = _get_owned_mindmap(db, mindmap_id, user_id)
@@ -93,7 +95,7 @@ async def list_nodes(
     skip: int = 0,
     limit: int = Query(100, ge=1, le=500),
     user_id: uuid.UUID = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get all nodes for a mind map"""
     _get_owned_mindmap(db, mindmap_id, user_id)
@@ -108,7 +110,7 @@ async def create_node(
     mindmap_id: uuid.UUID,
     node: NodeCreate,
     user_id: uuid.UUID = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Add a node to a mind map"""
     mindmap = _get_owned_mindmap(db, mindmap_id, user_id)
@@ -116,7 +118,7 @@ async def create_node(
     if node.parent_id:
         parent = db.query(Node).filter(
             Node.id == node.parent_id,
-            Node.mindmap_id == mindmap_id
+            Node.mindmap_id == mindmap_id,
         ).first()
         if not parent:
             raise HTTPException(status_code=404, detail="Parent node not found")
@@ -128,7 +130,7 @@ async def create_node(
         color=node.color,
         x=node.x,
         y=node.y,
-        parent_id=node.parent_id
+        parent_id=node.parent_id,
     )
     db.add(db_node)
     db.commit()
@@ -146,14 +148,14 @@ async def update_node(
     node_id: uuid.UUID,
     node_update: NodeUpdate,
     user_id: uuid.UUID = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Partially update a node (text, color, position, focus_level)"""
     mindmap = _get_owned_mindmap(db, mindmap_id, user_id)
 
     db_node = db.query(Node).filter(
         Node.id == node_id,
-        Node.mindmap_id == mindmap_id
+        Node.mindmap_id == mindmap_id,
     ).first()
     if not db_node:
         raise HTTPException(status_code=404, detail="Node not found")
@@ -176,14 +178,14 @@ async def delete_node(
     mindmap_id: uuid.UUID,
     node_id: uuid.UUID,
     user_id: uuid.UUID = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Remove a node from a mind map"""
     mindmap = _get_owned_mindmap(db, mindmap_id, user_id)
 
     node = db.query(Node).filter(
         Node.id == node_id,
-        Node.mindmap_id == mindmap_id
+        Node.mindmap_id == mindmap_id,
     ).first()
     if not node:
         raise HTTPException(status_code=404, detail="Node not found")
@@ -207,7 +209,7 @@ async def list_sessions(
     skip: int = 0,
     limit: int = Query(100, ge=1, le=500),
     user_id: uuid.UUID = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get all BCI sessions for a mind map (most recent first)"""
     _get_owned_mindmap(db, mindmap_id, user_id)
@@ -222,7 +224,7 @@ async def create_session(
     mindmap_id: uuid.UUID,
     session: SessionCreate,
     user_id: uuid.UUID = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Save session stats for a mind map"""
     _get_owned_mindmap(db, mindmap_id, user_id)
@@ -232,11 +234,10 @@ async def create_session(
         avg_focus=session.avg_focus,
         duration_seconds=session.duration_seconds,
         node_count=session.node_count,
-        focus_timeline=session.focus_timeline
+        focus_timeline=session.focus_timeline,
     )
     db.add(db_session)
     db.commit()
     db.refresh(db_session)
 
     return db_session
-

@@ -1,20 +1,13 @@
+"""Mind Mapper FastAPI application."""
+
 import os
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from typing import List, Optional
-import uuid
 
-from database import engine, get_db
-from models import Base, MindMap, Node, Session as MindMapSession
-from schemas import (
-    MindMapCreate, MindMapResponse, 
-    NodeCreate, NodeResponse,
-    SessionCreate, SessionResponse
-)
-from endpoints import router as api_router
+from app.db.session import engine, Base
+from app.api.endpoints import router as api_router
 
-# Create tables
+# Create tables on startup
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Mind Mapper API", version="1.0.0")
@@ -35,14 +28,12 @@ app.add_middleware(
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
 
+
 @app.get("/")
 def read_root():
     return {"message": "Mind Mapper API", "version": "1.0.0"}
 
+
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8002)

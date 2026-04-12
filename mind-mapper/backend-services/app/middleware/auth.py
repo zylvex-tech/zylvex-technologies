@@ -1,10 +1,12 @@
+"""Authentication middleware for Mind Mapper backend."""
+
 import httpx
 from fastapi import HTTPException, Header
 import logging
-import os
 import uuid
 
-AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://localhost:8001")
+from app.core.config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,7 +20,7 @@ async def get_current_user_id(authorization: str = Header(...)) -> uuid.UUID:
     async with httpx.AsyncClient() as client:
         try:
             r = await client.get(
-                f"{AUTH_SERVICE_URL}/auth/verify",
+                f"{settings.AUTH_SERVICE_URL}/auth/verify",
                 headers={"Authorization": f"Bearer {token}"},
                 timeout=5.0,
             )

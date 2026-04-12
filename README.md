@@ -1,12 +1,62 @@
 # Zylvex Technologies
 
-Enterprise AR + BCI Platform Monorepo
+Enterprise-grade monorepo for spatial AR and mind-mapping applications.
 
-## Modules
-- Spatial Canvas (AR creation system)
-- Mind Mapper (BCI visualization system)
-- Shared services (auth, billing, analytics)
+## Products
 
-## Status
-Initial architecture setup complete.
-⌊‣䥃䌯⁄楐数楬敮ਊ祚癬硥吠捥湨汯杯敩⁳獵獥䜠瑩畈⁢捁楴湯⁳潦⁲畡潴慭整⁤䥃䌯⹄吠敨洠湯牯灥⁯慨⁳楦敶眠牯晫潬獷਺⌊⌣ㄠ‮畁桴匠牥楶散䌠⁉怨畡桴挭⹩浹恬਩‭⨪牔杩敧獲⨪›畐桳漠⁲剐琠⁯浠楡恮愠晦捥楴杮怠桳牡摥愯瑵⽨⨪੠‭⨪潊獢⨪਺†‭瑠獥恴›灓湩⁳灵倠獯杴敲兓ⱌ爠湵⁳祰整瑳眠瑩⁨潣敶慲敧 ⴠ怠楬瑮㩠删湵⁳汦歡㡥愠摮戠慬正ⴠ挭敨正 ⴠ怠畢汩恤›畂汩獤䐠捯敫⁲浩条⁥湡⁤敶楲楦獥椠⁴瑳牡獴栠慥瑬票ਊ⌣‣⸲匠慰楴污䌠湡慶⁳慂正湥⁤䥃⠠獠慰楴污挭湡慶⵳楣礮汭⥠ⴊ⨠吪楲杧牥⩳㨪倠獵⁨牯倠⁒潴怠慭湩⁠晡敦瑣湩⁧獠慰楴污挭湡慶⽳慢正湥⽤⨪੠‭⨪潊獢⨪਺†‭瑠獥恴›灓湩⁳灵倠獯杴敲兓⁌‫潐瑳䥇ⱓ爠湵⁳祰整瑳眠瑩⁨潣敶慲敧 ⴠ怠楬瑮㩠删湵⁳汦歡㡥愠摮戠慬正ⴠ挭敨正 ⴠ怠畢汩恤›畂汩獤䐠捯敫⁲浩条⁥湡⁤敶楲楦獥椠⁴瑳牡獴栠慥瑬票ਊ⌣‣⸳䴠扯汩⁥灁⁰䥃⠠浠扯汩ⵥ楣礮汭⥠ⴊ⨠吪楲杧牥⩳㨪倠獵⁨牯倠⁒潴怠慭湩⁠晡敦瑣湩⁧獠慰楴污挭湡慶⽳潭楢敬⨯怪ⴊ⨠䨪扯⩳㨪 ⴠ怠楬瑮㩠删湵⁳灮⁸獥楬瑮⸠ ⴠ怠祴数挭敨正㩠删湵⁳灮⁸獴⁣ⴭ潮浅瑩⠠牣慥整⁳獴潣普杩樮潳⁮晩洠獩楳杮਩†‭瑠獥恴›畒獮渠浰琠獥⁴ⴭⴠ眭瑡档汁㵬慦獬੥⌊⌣㐠‮瑓条湩⁧敄汰祯敭瑮⠠摠灥潬⵹瑳条湩⹧浹恬਩‭⨪牔杩敧獲⨪›畐桳琠⁯浠楡恮漠汮⁹渨瑯倠獒਩‭⨪潊獢⨪਺†‭摠灥潬⵹畡桴㩠匠䡓椠瑮⁯瑳条湩⁧敳癲牥‬異汬⁳慬整瑳‬畲獮搠捯敫⵲潣灭獯⁥灵椠⁮獠慨敲⽤畡桴怯 ⴠ怠敤汰祯猭慰楴污挭湡慶恳›慓敭映牯怠灳瑡慩⵬慣癮獡戯捡敫摮怯 ⴠ怠潮楴祦㩠匠湥獤匠慬正渠瑯晩捩瑡潩⁮湯猠捵散獳是楡畬敲ਊ⌣‣⸵倠⁒畑污瑩⁹慇整⠠灠⵲档捥獫礮汭⥠ⴊ⨠吪楲杧牥⩳㨪䄠汬倠獒琠⁯浠楡恮ⴊ⨠䨪扯⩳㨪 ⴠ䌠敨正⁳剐栠獡愠搠獥牣灩楴湯⠠慦汩⁳晩攠灭祴਩†‭桃捥獫戠慲据⁨慮敭映汯潬獷挠湯敶瑮潩㩮怠敦瑡牵⽥怪‬扠杵楦⽸怪‬牯怠敲敬獡⽥怪 ⴠ倠獯獴愠挠浯敭瑮漠⁮剐猠浵慭楲楺杮眠楨档猠牥楶散⁳敷敲挠慨杮摥ਊ⌣‣敒畱物摥䜠瑩畈⁢敓牣瑥ੳ敓⁴桴獥⁥湩礠畯⁲敲潰楳潴祲猠瑥楴杮㩳ⴊ怠呓䝁义彇佈呓㩠匠慴楧杮猠牥敶⁲潨瑳慮敭䤯੐‭占䅔䥇䝎卟䡓䭟奅㩠匠䡓瀠楲慶整欠祥映牯猠慴楧杮猠牥敶ੲ‭占䅔䥇䝎啟䕓恒›卓⁈獵牥慮敭映牯猠慴楧杮猠牥敶ੲ‭䩠呗卟䍅䕒恔›敓牣瑥欠祥映牯䨠呗琠歯湥猠杩楮杮ⴊ怠䅄䅔䅂䕓啟䱒㩠䐠瑡扡獡⁥潣湮捥楴湯猠牴湩੧‭占䅌䭃坟䉅佈䭏啟䱒㩠匠慬正眠扥潨歯唠䱒映牯渠瑯晩捩瑡潩獮ਊ⌣‣潌慣⁬敔瑳湩੧潔琠獥⁴潷歲汦睯⁳潬慣汬㩹怊恠慢桳⌊䤠獮慴汬愠瑣⠠潬慣⁬楇䡴扵䄠瑣潩獮爠湵敮⥲戊敲⁷湩瑳污⁬捡ੴ⌊删湵猠数楣楦⁣潷歲汦睯愊瑣ⴠ⁪整瑳ⴠ⁗朮瑩畨⽢潷歲汦睯⽳畡桴挭⹩浹੬恠੠
+**Spatial Canvas** — Augmented reality anchor platform. Place geo-tagged content in the physical world via mobile camera. Powered by PostGIS geospatial queries.
+
+**Mind Mapper** — Brain-computer interface mind-mapping application. Visualize cognitive focus as interactive node trees. Ships with a focus simulator; real BCI hardware adapters planned.
+
+## Quick Start
+
+Prerequisites: Docker, Docker Compose
+
+```bash
+git clone https://github.com/zylvex-tech/zylvex-technologies.git
+cd zylvex-technologies
+cp shared/auth/.env.example shared/auth/.env          # set JWT_SECRET
+cp spatial-canvas/backend/.env.example spatial-canvas/backend/.env
+cp mind-mapper/backend-services/.env.example mind-mapper/backend-services/.env
+docker compose -f docker-compose.full-stack.yml up --build
+```
+
+| Service | URL | Docs |
+|---|---|---|
+| Auth Service | http://localhost:8001 | http://localhost:8001/docs |
+| Spatial Canvas API | http://localhost:8000 | http://localhost:8000/docs |
+| Mind Mapper API | http://localhost:8002 | http://localhost:8002/docs |
+
+## Repository Structure
+
+```
+zylvex-technologies/
+├── shared/auth/                  Shared JWT authentication service
+├── spatial-canvas/
+│   ├── backend/                  FastAPI + PostGIS anchor API
+│   └── mobile/                   React Native AR camera app (Expo)
+├── mind-mapper/
+│   ├── backend-services/         FastAPI mind map & BCI session API
+│   └── mobile-bci/               React Native BCI app (Expo, TypeScript)
+├── infrastructure/               Kubernetes, Terraform, monitoring (planned)
+├── docs/architecture/            Architecture decision records
+├── docker-compose.full-stack.yml One-command local development
+└── CONTRIBUTING.md
+```
+
+## CI/CD
+
+| Workflow | Trigger |
+|---|---|
+| `auth-ci.yml` | Push/PR touching `shared/auth/**` |
+| `spatial-canvas-ci.yml` | Push/PR touching `spatial-canvas/backend/**` |
+| `mobile-ci.yml` | Push/PR touching `spatial-canvas/mobile/**` |
+| `mind-mapper-ci.yml` | Push/PR touching `mind-mapper/**` |
+| `pr-checks.yml` | All PRs to `main` |
+| `deploy-staging.yml` | Push to `main` |
+
+See `CONTRIBUTING.md` for development workflow and branch conventions.
+
+## License
+
+MIT
