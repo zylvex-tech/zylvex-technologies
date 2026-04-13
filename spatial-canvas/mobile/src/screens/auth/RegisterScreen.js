@@ -13,39 +13,36 @@ import {
 } from 'react-native';
 import { authService } from '../../services/auth';
 
-const LoginScreen = ({ navigation }) => {
+const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password');
+  const handleRegister = async () => {
+    if (!email || !password || !fullName) {
+      Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     setLoading(true);
 
     try {
-      const result = await authService.login(email, password);
-      
+      const result = await authService.register(email, password, fullName);
+
       if (result.success) {
-        Alert.alert('Success', 'Logged in successfully!');
-        // Navigate to main app
-        navigation.replace('Main');
+        Alert.alert('Success', 'Account created! Please log in.', [
+          { text: 'OK', onPress: () => navigation.replace('Login') },
+        ]);
       } else {
-        Alert.alert('Login Failed', result.error);
+        Alert.alert('Registration Failed', result.error);
       }
     } catch (error) {
       Alert.alert('Error', 'An unexpected error occurred');
-      console.error('Login error:', error);
+      console.error('Register error:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleRegister = () => {
-    navigation.navigate('Register');
   };
 
   return (
@@ -56,9 +53,18 @@ const LoginScreen = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.content}>
           <Text style={styles.title}>SPATIAL CANVAS</Text>
-          <Text style={styles.subtitle}>Login to your account</Text>
+          <Text style={styles.subtitle}>Create an account</Text>
 
           <View style={styles.form}>
+            <Text style={styles.label}>Full Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your full name"
+              value={fullName}
+              onChangeText={setFullName}
+              editable={!loading}
+            />
+
             <Text style={styles.label}>Email</Text>
             <TextInput
               style={styles.input}
@@ -82,24 +88,22 @@ const LoginScreen = ({ navigation }) => {
 
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleLogin}
+              onPress={handleRegister}
               disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.buttonText}>Login</Text>
+                <Text style={styles.buttonText}>Register</Text>
               )}
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.linkButton}
-              onPress={handleRegister}
+              onPress={() => navigation.navigate('Login')}
               disabled={loading}
             >
-              <Text style={styles.linkText}>
-                Don't have an account? Register here
-              </Text>
+              <Text style={styles.linkText}>Already have an account? Login here</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -183,4 +187,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginScreen;
+export default RegisterScreen;

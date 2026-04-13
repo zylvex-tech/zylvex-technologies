@@ -8,6 +8,8 @@ import * as Font from 'expo-font';
 // Import screens
 import CameraScreen from './src/screens/CameraScreen';
 import NearbyScreen from './src/screens/NearbyScreen';
+import LoginScreen from './src/screens/auth/LoginScreen';
+import RegisterScreen from './src/screens/auth/RegisterScreen';
 
 const Stack = createStackNavigator();
 
@@ -43,12 +45,14 @@ const App = () => {
     <NavigationContainer>
       <StatusBar style="auto" />
       <Stack.Navigator
-        initialRouteName="Camera"
+        initialRouteName="Login"
         screenOptions={{
           headerShown: false,
           cardStyle: { backgroundColor: '#fff' },
         }}
       >
+        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Camera" component={CameraScreen} />
         <Stack.Screen name="Nearby" component={NearbyScreen} />
       </Stack.Navigator>

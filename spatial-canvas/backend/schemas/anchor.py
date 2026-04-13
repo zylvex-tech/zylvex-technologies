@@ -3,7 +3,7 @@
 from typing import Optional
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class AnchorBase(BaseModel):
@@ -14,7 +14,8 @@ class AnchorBase(BaseModel):
     latitude: float = Field(..., ge=-90, le=90, description="Latitude in decimal degrees")
     longitude: float = Field(..., ge=-180, le=180, description="Longitude in decimal degrees")
 
-    @validator('content_type')
+    @field_validator('content_type')
+    @classmethod
     def validate_content_type(cls, v):
         allowed_types = ["text", "image", "video", "audio"]
         if v not in allowed_types:
