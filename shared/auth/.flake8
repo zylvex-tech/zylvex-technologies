@@ -1,0 +1,6 @@
+[flake8]
+max-line-length = 88
+extend-ignore = E402, W503, W291
+per-file-ignores =
+    migrations/*:F401
+    tests/*:F401

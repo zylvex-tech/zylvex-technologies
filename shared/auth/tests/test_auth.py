@@ -7,6 +7,7 @@ import jwt
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 # Set required env vars before importing the app
 os.environ.setdefault("DATABASE_URL", "sqlite:///./test_auth.db")
@@ -15,6 +16,10 @@ os.environ.setdefault("JWT_SECRET", "test-secret-key-for-ci")
 from app.main import app
 from app.db.base import Base
 from app.db.session import get_db
+from app.api.auth import limiter as auth_limiter
+
+# Disable rate limiting in tests so tests don't hit rate limits
+auth_limiter.enabled = False
 
 # ---------------------------------------------------------------------------
 # Test database setup (SQLite in-memory)
@@ -24,6 +29,7 @@ SQLALCHEMY_DATABASE_URL = "sqlite://"  # in-memory
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -76,6 +82,7 @@ def _register_and_login(email=None, password=None):
 # 1. Health check
 # ---------------------------------------------------------------------------
 
+
 def test_health_check():
     response = client.get("/health")
     assert response.status_code == 200
@@ -85,6 +92,7 @@ def test_health_check():
 # ---------------------------------------------------------------------------
 # 2. Register
 # ---------------------------------------------------------------------------
+
 
 def test_register_user():
     response = client.post("/auth/register", json=_USER_PAYLOAD)
@@ -101,6 +109,7 @@ def test_register_user():
 # 3. Duplicate email
 # ---------------------------------------------------------------------------
 
+
 def test_register_duplicate_email():
     client.post("/auth/register", json=_USER_PAYLOAD)
     response = client.post("/auth/register", json=_USER_PAYLOAD)
@@ -111,6 +120,7 @@ def test_register_duplicate_email():
 # ---------------------------------------------------------------------------
 # 4. Login — success
 # ---------------------------------------------------------------------------
+
 
 def test_login_success():
     client.post("/auth/register", json=_USER_PAYLOAD)
@@ -129,6 +139,7 @@ def test_login_success():
 # 5. Login — wrong password
 # ---------------------------------------------------------------------------
 
+
 def test_login_wrong_password():
     client.post("/auth/register", json=_USER_PAYLOAD)
     response = client.post(
@@ -142,6 +153,7 @@ def test_login_wrong_password():
 # 6. Login — unknown email
 # ---------------------------------------------------------------------------
 
+
 def test_login_unknown_email():
     response = client.post(
         "/auth/login",
@@ -153,6 +165,7 @@ def test_login_unknown_email():
 # ---------------------------------------------------------------------------
 # 7. GET /auth/me — authenticated
 # ---------------------------------------------------------------------------
+
 
 def test_get_me_authenticated():
     tokens = _register_and_login()
@@ -169,6 +182,7 @@ def test_get_me_authenticated():
 # 8. GET /auth/me — no token
 # ---------------------------------------------------------------------------
 
+
 def test_get_me_no_token():
     response = client.get("/auth/me")
     assert response.status_code in (401, 403)
@@ -178,10 +192,15 @@ def test_get_me_no_token():
 # 9. GET /auth/me — expired token
 # ---------------------------------------------------------------------------
 
+
 def test_get_me_expired_token():
     secret = os.environ.get("JWT_SECRET", "test-secret-key-for-ci")
     expired_token = jwt.encode(
-        {"sub": "00000000-0000-0000-0000-000000000001", "exp": int(time.time()) - 3600, "type": "access"},
+        {
+            "sub": "00000000-0000-0000-0000-000000000001",
+            "exp": int(time.time()) - 3600,
+            "type": "access",
+        },
         secret,
         algorithm="HS256",
     )
@@ -195,6 +214,7 @@ def test_get_me_expired_token():
 # ---------------------------------------------------------------------------
 # 10. GET /auth/verify — valid token
 # ---------------------------------------------------------------------------
+
 
 def test_verify_token():
     tokens = _register_and_login()
@@ -213,6 +233,7 @@ def test_verify_token():
 # 11. Refresh token — exchange for new access token
 # ---------------------------------------------------------------------------
 
+
 def test_refresh_token():
     tokens = _register_and_login()
     response = client.post(
@@ -228,6 +249,7 @@ def test_refresh_token():
 # ---------------------------------------------------------------------------
 # 12. Refresh token rotation — old token revoked after use
 # ---------------------------------------------------------------------------
+
 
 def test_refresh_token_rotation():
     tokens = _register_and_login()
@@ -246,6 +268,7 @@ def test_refresh_token_rotation():
 # 13. Logout — returns 200
 # ---------------------------------------------------------------------------
 
+
 def test_logout():
     tokens = _register_and_login()
     response = client.post(
@@ -258,6 +281,7 @@ def test_logout():
 # ---------------------------------------------------------------------------
 # 14. Logout revokes token — refresh after logout should fail
 # ---------------------------------------------------------------------------
+
 
 def test_logout_revokes_token():
     tokens = _register_and_login()
@@ -275,6 +299,7 @@ def test_logout_revokes_token():
 # 15. Deactivated user cannot login
 # ---------------------------------------------------------------------------
 
+
 def test_deactivated_user_cannot_login():
     # Register & get token with admin-style direct DB manipulation
     client.post("/auth/register", json=_USER_PAYLOAD)
@@ -282,6 +307,7 @@ def test_deactivated_user_cannot_login():
     # Deactivate the user directly via the DB
     db = next(override_get_db())
     from app.models.user import User
+
     user = db.query(User).filter(User.email == _USER_PAYLOAD["email"]).first()
     user.is_active = False
     db.commit()

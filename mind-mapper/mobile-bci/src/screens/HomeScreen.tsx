@@ -16,9 +16,8 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { RectButton } from 'react-native-gesture-handler';
 
 import { RootStackParamList } from '../../App';
-import { getMindMaps, deleteMindMap } from '../services/api';
+import { getMindMaps, deleteMindMap, createMindMap } from '../services/api';
 import { getToken, clearToken } from '../services/auth';
-import { API_BASE_URL } from '../config';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 type HomeScreenRouteProp = RouteProp<RootStackParamList, 'Home'>;
@@ -90,24 +89,11 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             }
 
             try {
-              const response = await fetch(`${API_BASE_URL}/api/v1/mindmaps`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${await getToken()}`,
-                },
-                body: JSON.stringify({ title: title.trim() }),
+              const newMindMap = await createMindMap(title.trim());
+              navigation.navigate('MindMapEditor', {
+                mindmapId: newMindMap.id,
+                title: newMindMap.title,
               });
-
-              if (response.ok) {
-                const newMindMap = await response.json();
-                navigation.navigate('MindMapEditor', {
-                  mindmapId: newMindMap.id,
-                  title: newMindMap.title,
-                });
-              } else {
-                throw new Error('Failed to create mind map');
-              }
             } catch (error) {
               console.error('Failed to create mind map:', error);
               Alert.alert('Error', 'Failed to create mind map. Please try again.');

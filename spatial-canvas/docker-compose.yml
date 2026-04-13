@@ -29,7 +29,6 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://spatialcanvas:spatialcanvas123@postgres:5432/spatialcanvas
-      JWT_SECRET_KEY: your-super-secret-jwt-key-change-in-production
       ENVIRONMENT: development
     ports:
       - "8000:8000"

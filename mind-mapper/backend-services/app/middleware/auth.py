@@ -32,7 +32,11 @@ async def get_current_user_id(authorization: str = Header(...)) -> uuid.UUID:
             raise HTTPException(status_code=401, detail="Invalid or expired token")
         except (httpx.RequestError, httpx.TimeoutException) as exc:
             logger.error("Auth service unreachable: %s", exc)
-            raise HTTPException(status_code=503, detail="Authentication service unavailable")
+            raise HTTPException(
+                status_code=503, detail="Authentication service unavailable"
+            )
         except Exception as exc:
             logger.exception("Unexpected error during token verification: %s", exc)
-            raise HTTPException(status_code=503, detail="Authentication service unavailable")
+            raise HTTPException(
+                status_code=503, detail="Authentication service unavailable"
+            )

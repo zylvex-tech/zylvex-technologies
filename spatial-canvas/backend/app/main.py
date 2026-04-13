@@ -5,13 +5,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
 from app.api.v1.api import api_router
 from app.core.config import settings
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -21,6 +24,10 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
 )
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Set up CORS — origins sourced from environment variable
 allowed_origins = os.getenv(
@@ -46,7 +53,10 @@ def read_root():
         "message": "Welcome to SPATIAL CANVAS API",
         "version": "1.0.0",
         "docs": "/docs",
-        "requires_auth": "POST /api/v1/anchors, GET /api/v1/anchors/mine, DELETE /api/v1/anchors/{id}"
+        "requires_auth": (
+            "POST /api/v1/anchors, GET /api/v1/anchors/mine,"
+            " DELETE /api/v1/anchors/{id}"
+        ),
     }
 
 

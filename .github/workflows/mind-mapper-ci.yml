@@ -94,10 +94,9 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: './mind-mapper/mobile-bci/package-lock.json'
+          cache-dependency-path: './package-lock.json'
 
       - name: Install dependencies
-        working-directory: ./mind-mapper/mobile-bci
         run: npm ci
 
       - name: Type check

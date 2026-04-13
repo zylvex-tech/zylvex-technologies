@@ -51,7 +51,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://auth_user:auth_pass@postgres-auth:5432/auth_db
-      JWT_SECRET: local-dev-secret-change-in-production
+      JWT_SECRET: ${JWT_SECRET:-please-set-jwt-secret-in-env}
       ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:8081,exp://localhost:8081"
     ports: ["8001:8001"]
     networks: [zylvex]

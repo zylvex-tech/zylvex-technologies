@@ -27,12 +27,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      auth_service:
+        condition: service_started
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/spatial_canvas
       AUTH_SERVICE_URL: http://auth_service:8001
       API_V1_STR: /api/v1
       PROJECT_NAME: SPATIAL CANVAS
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-development-secret-key-change-in-production}
       ACCESS_TOKEN_EXPIRE_MINUTES: 15
       REFRESH_TOKEN_EXPIRE_DAYS: 30
     ports:
@@ -51,33 +52,37 @@ services:
       - auth_network
 
   auth_service:
-    image: spatial_canvas_backend  # Using same image for auth service
-    container_name: auth_service
-    depends_on:
-      - postgres
+    build:
+      context: ../../shared/auth
+      dockerfile: Dockerfile
+    container_name: spatial-canvas-auth-service
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/auth_service
-      API_V1_STR: /api/v1
-      PROJECT_NAME: Auth Service
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-development-secret-key-change-in-production}
-      ACCESS_TOKEN_EXPIRE_MINUTES: 15
-      REFRESH_TOKEN_EXPIRE_DAYS: 30
+      DATABASE_URL: postgresql://auth_user:auth_pass@postgres_auth:5432/auth_db
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret-change-in-production}
+      ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:8081"
+    depends_on:
+      postgres_auth:
+        condition: service_healthy
     ports:
       - "8001:8001"
-    volumes:
-      - ../shared/auth/app:/app/app
-      - ../shared/auth/alembic.ini:/app/alembic.ini
-      - ../shared/auth/alembic:/app/alembic
-    working_dir: /app
-    command: >
-      sh -c "
-        cd /app &&
-        alembic upgrade head &&
-        uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
-      "
     networks:
       - auth_network
       - spatial_network
+
+  postgres_auth:
+    image: postgres:15-alpine
+    container_name: spatial-canvas-auth-db
+    environment:
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_pass
+      POSTGRES_DB: auth_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - auth_network
 
 networks:
   spatial_network:

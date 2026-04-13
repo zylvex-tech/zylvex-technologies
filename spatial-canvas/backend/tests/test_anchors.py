@@ -11,7 +11,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
 
 os.environ.setdefault("DATABASE_URL", "sqlite://")
-os.environ.setdefault("JWT_SECRET_KEY", "test-secret-for-ci")
 os.environ.setdefault("AUTH_SERVICE_URL", "http://localhost:8001")
 
 from app.main import app
@@ -50,6 +49,7 @@ def _user_id_override():
 # 1. Health check (no auth required)
 # ---------------------------------------------------------------------------
 
+
 def test_health_check():
     client = TestClient(app)
     response = client.get("/health")
@@ -61,6 +61,7 @@ def test_health_check():
 # 2. Create anchor — unauthenticated (no header)
 # ---------------------------------------------------------------------------
 
+
 def test_create_anchor_unauthenticated():
     client = TestClient(app)
     response = client.post("/api/v1/anchors", json=ANCHOR_PAYLOAD)
@@ -70,6 +71,7 @@ def test_create_anchor_unauthenticated():
 # ---------------------------------------------------------------------------
 # 3. Create anchor — authenticated (mocked auth + service)
 # ---------------------------------------------------------------------------
+
 
 def test_create_anchor_authenticated(mocker):
     app.dependency_overrides[get_current_user] = _auth_override
@@ -109,6 +111,7 @@ def test_create_anchor_authenticated(mocker):
 # 4. Get nearby anchors — verify radius filter applied
 # ---------------------------------------------------------------------------
 
+
 def test_get_nearby_anchors(mocker):
     mock_anchors = []
     for i, (lat, lon) in enumerate([(51.5074, -0.1278), (51.5080, -0.1280)]):
@@ -144,6 +147,7 @@ def test_get_nearby_anchors(mocker):
 # ---------------------------------------------------------------------------
 # 5. Get my anchors — verify user scoping
 # ---------------------------------------------------------------------------
+
 
 def test_get_my_anchors(mocker):
     app.dependency_overrides[get_current_user] = _auth_override
@@ -182,6 +186,7 @@ def test_get_my_anchors(mocker):
 # 6. Get anchor by ID
 # ---------------------------------------------------------------------------
 
+
 def test_get_anchor_by_id(mocker):
     anchor_id = uuid.uuid4()
     mock_anchor = MagicMock()
@@ -211,6 +216,7 @@ def test_get_anchor_by_id(mocker):
 # 7. Get anchor by ID — not found
 # ---------------------------------------------------------------------------
 
+
 def test_get_anchor_by_id_not_found(mocker):
     mocker.patch(
         "app.api.v1.endpoints.anchors.AnchorService.get_anchor_by_id",
@@ -225,6 +231,7 @@ def test_get_anchor_by_id_not_found(mocker):
 # ---------------------------------------------------------------------------
 # 8. Delete anchor — owner can delete
 # ---------------------------------------------------------------------------
+
 
 def test_delete_anchor_owner(mocker):
     app.dependency_overrides[get_current_user] = _auth_override
@@ -248,6 +255,7 @@ def test_delete_anchor_owner(mocker):
 # ---------------------------------------------------------------------------
 # 9. Delete anchor — non-owner gets 403
 # ---------------------------------------------------------------------------
+
 
 def test_delete_anchor_non_owner(mocker):
     app.dependency_overrides[get_current_user] = _auth_override
