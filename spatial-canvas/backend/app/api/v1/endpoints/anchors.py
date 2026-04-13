@@ -86,9 +86,7 @@ def get_anchors_nearby(
 ):
     """Get anchors within radius of a location."""
     try:
-        logger.info(
-            f"Searching anchors near ({latitude}, {longitude}) within {radius_km}km"
-        )
+        logger.info(f"Searching anchors within {radius_km}km radius")
 
         anchors = AnchorService.get_anchors_nearby(
             db=db,
