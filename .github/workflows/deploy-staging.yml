@@ -8,6 +8,9 @@ on:
       - '**/*.txt'
       - '.github/**'
 
+permissions:
+  contents: read
+
 jobs:
   deploy-auth:
     runs-on: ubuntu-latest
