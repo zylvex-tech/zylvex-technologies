@@ -44,7 +44,7 @@ class AnchorResponse(AnchorBase):
     id: UUID
     user_id: UUID
     owner_name: Optional[str] = Field(None, description="Full name of anchor owner")
-    created_at: datetime
+    created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     class Config:

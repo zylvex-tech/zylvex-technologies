@@ -54,6 +54,8 @@ async def create_anchor(
             updated_at=anchor.updated_at,
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error creating anchor: {str(e)}")
         raise HTTPException(
@@ -119,6 +121,8 @@ def get_anchors_nearby(
         return AnchorListResponse(
             anchors=anchor_responses, count=len(anchor_responses), radius_km=radius_km
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error fetching anchors: {str(e)}")
         raise HTTPException(
@@ -159,6 +163,8 @@ async def get_my_anchors(
 
         return anchor_responses
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error fetching user anchors: {str(e)}")
         raise HTTPException(
@@ -231,6 +237,8 @@ def get_anchor(anchor_id: UUID, db: Session = Depends(get_db)):
             created_at=anchor.created_at,
             updated_at=anchor.updated_at,
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error fetching anchor {anchor_id}: {str(e)}")
         raise HTTPException(
