@@ -8,7 +8,6 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
-from app.db.session import Base
 from app.api.endpoints import router as api_router
 
 app = FastAPI(title="Mind Mapper API", version="1.0.0")

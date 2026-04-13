@@ -5,7 +5,7 @@ from app.crud.user import (
     create_user,
     update_user,
     delete_user,
-    authenticate_user
+    authenticate_user,
 )
 
 __all__ = [
@@ -15,5 +15,5 @@ __all__ = [
     "create_user",
     "update_user",
     "delete_user",
-    "authenticate_user"
+    "authenticate_user",
 ]

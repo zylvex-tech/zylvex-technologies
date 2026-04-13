@@ -14,8 +14,7 @@ from app.core.config import settings
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -54,7 +53,10 @@ def read_root():
         "message": "Welcome to SPATIAL CANVAS API",
         "version": "1.0.0",
         "docs": "/docs",
-        "requires_auth": "POST /api/v1/anchors, GET /api/v1/anchors/mine, DELETE /api/v1/anchors/{id}"
+        "requires_auth": (
+            "POST /api/v1/anchors, GET /api/v1/anchors/mine,"
+            " DELETE /api/v1/anchors/{id}"
+        ),
     }
 
 

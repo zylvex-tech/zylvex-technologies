@@ -27,7 +27,7 @@ def create_user(db: Session, user: UserCreate) -> User:
         hashed_password=hashed_password,
         full_name=user.full_name,
         is_active=True,
-        is_verified=False
+        is_verified=False,
     )
     db.add(db_user)
     try:
@@ -39,19 +39,21 @@ def create_user(db: Session, user: UserCreate) -> User:
         raise ValueError(f"User with email {user.email} already exists")
 
 
-def update_user(db: Session, user_id: uuid.UUID, user_update: UserUpdate) -> Optional[User]:
+def update_user(
+    db: Session, user_id: uuid.UUID, user_update: UserUpdate
+) -> Optional[User]:
     db_user = get_user(db, user_id)
     if not db_user:
         return None
-    
+
     update_data = user_update.dict(exclude_unset=True)
-    
+
     if "password" in update_data:
         update_data["hashed_password"] = get_password_hash(update_data.pop("password"))
-    
+
     for field, value in update_data.items():
         setattr(db_user, field, value)
-    
+
     db.commit()
     db.refresh(db_user)
     return db_user
@@ -61,7 +63,7 @@ def delete_user(db: Session, user_id: uuid.UUID) -> bool:
     db_user = get_user(db, user_id)
     if not db_user:
         return False
-    
+
     db.delete(db_user)
     db.commit()
     return True

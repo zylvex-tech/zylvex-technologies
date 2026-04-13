@@ -13,9 +13,13 @@ from slowapi.util import get_remote_address
 from app.db.session import get_db
 from app.models.mind_map import MindMap, Node, Session as MindMapSession
 from app.schemas.mind_map import (
-    MindMapCreate, MindMapResponse,
-    NodeCreate, NodeUpdate, NodeResponse,
-    SessionCreate, SessionResponse,
+    MindMapCreate,
+    MindMapResponse,
+    NodeCreate,
+    NodeUpdate,
+    NodeResponse,
+    SessionCreate,
+    SessionResponse,
 )
 from app.middleware.auth import get_current_user_id
 
@@ -23,12 +27,15 @@ router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 
 
-def _get_owned_mindmap(db: Session, mindmap_id: uuid.UUID, user_id: uuid.UUID) -> MindMap:
+def _get_owned_mindmap(
+    db: Session, mindmap_id: uuid.UUID, user_id: uuid.UUID
+) -> MindMap:
     """Return mindmap if it exists and is owned by user, else raise 404."""
-    mindmap = db.query(MindMap).filter(
-        MindMap.id == mindmap_id,
-        MindMap.user_id == user_id
-    ).first()
+    mindmap = (
+        db.query(MindMap)
+        .filter(MindMap.id == mindmap_id, MindMap.user_id == user_id)
+        .first()
+    )
     if not mindmap:
         raise HTTPException(
             status_code=404,
@@ -41,7 +48,10 @@ def _get_owned_mindmap(db: Session, mindmap_id: uuid.UUID, user_id: uuid.UUID) -
 # MindMap endpoints
 # ---------------------------------------------------------------------------
 
-@router.post("/mindmaps", response_model=MindMapResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/mindmaps", response_model=MindMapResponse, status_code=status.HTTP_201_CREATED
+)
 @limiter.limit("30/minute")
 async def create_mindmap(
     request: Request,
@@ -66,14 +76,20 @@ async def list_mindmaps(
     db: Session = Depends(get_db),
 ):
     """List mind maps for the current user (paginated)"""
-    mindmaps = db.query(MindMap).filter(
-        MindMap.user_id == user_id
-    ).order_by(desc(MindMap.updated_at)).offset(skip).limit(limit).all()
+    mindmaps = (
+        db.query(MindMap)
+        .filter(MindMap.user_id == user_id)
+        .order_by(desc(MindMap.updated_at))
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
     for mindmap in mindmaps:
-        mindmap.node_count = db.query(func.count(Node.id)).filter(
-            Node.mindmap_id == mindmap.id
-        ).scalar() or 0
+        mindmap.node_count = (
+            db.query(func.count(Node.id)).filter(Node.mindmap_id == mindmap.id).scalar()
+            or 0
+        )
 
     return mindmaps
 
@@ -95,6 +111,7 @@ async def delete_mindmap(
 # Node endpoints
 # ---------------------------------------------------------------------------
 
+
 @router.get("/mindmaps/{mindmap_id}/nodes", response_model=List[NodeResponse])
 async def list_nodes(
     mindmap_id: uuid.UUID,
@@ -105,13 +122,22 @@ async def list_nodes(
 ):
     """Get all nodes for a mind map"""
     _get_owned_mindmap(db, mindmap_id, user_id)
-    nodes = db.query(Node).filter(
-        Node.mindmap_id == mindmap_id
-    ).order_by(Node.created_at).offset(skip).limit(limit).all()
+    nodes = (
+        db.query(Node)
+        .filter(Node.mindmap_id == mindmap_id)
+        .order_by(Node.created_at)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
     return nodes
 
 
-@router.post("/mindmaps/{mindmap_id}/nodes", response_model=NodeResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/mindmaps/{mindmap_id}/nodes",
+    response_model=NodeResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 @limiter.limit("30/minute")
 async def create_node(
     request: Request,
@@ -124,10 +150,14 @@ async def create_node(
     mindmap = _get_owned_mindmap(db, mindmap_id, user_id)
 
     if node.parent_id:
-        parent = db.query(Node).filter(
-            Node.id == node.parent_id,
-            Node.mindmap_id == mindmap_id,
-        ).first()
+        parent = (
+            db.query(Node)
+            .filter(
+                Node.id == node.parent_id,
+                Node.mindmap_id == mindmap_id,
+            )
+            .first()
+        )
         if not parent:
             raise HTTPException(status_code=404, detail="Parent node not found")
 
@@ -161,10 +191,14 @@ async def update_node(
     """Partially update a node (text, color, position, focus_level)"""
     mindmap = _get_owned_mindmap(db, mindmap_id, user_id)
 
-    db_node = db.query(Node).filter(
-        Node.id == node_id,
-        Node.mindmap_id == mindmap_id,
-    ).first()
+    db_node = (
+        db.query(Node)
+        .filter(
+            Node.id == node_id,
+            Node.mindmap_id == mindmap_id,
+        )
+        .first()
+    )
     if not db_node:
         raise HTTPException(status_code=404, detail="Node not found")
 
@@ -181,7 +215,9 @@ async def update_node(
     return db_node
 
 
-@router.delete("/mindmaps/{mindmap_id}/nodes/{node_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/mindmaps/{mindmap_id}/nodes/{node_id}", status_code=status.HTTP_204_NO_CONTENT
+)
 async def delete_node(
     mindmap_id: uuid.UUID,
     node_id: uuid.UUID,
@@ -191,10 +227,14 @@ async def delete_node(
     """Remove a node from a mind map"""
     mindmap = _get_owned_mindmap(db, mindmap_id, user_id)
 
-    node = db.query(Node).filter(
-        Node.id == node_id,
-        Node.mindmap_id == mindmap_id,
-    ).first()
+    node = (
+        db.query(Node)
+        .filter(
+            Node.id == node_id,
+            Node.mindmap_id == mindmap_id,
+        )
+        .first()
+    )
     if not node:
         raise HTTPException(status_code=404, detail="Node not found")
 
@@ -211,6 +251,7 @@ async def delete_node(
 # Session endpoints
 # ---------------------------------------------------------------------------
 
+
 @router.get("/mindmaps/{mindmap_id}/sessions", response_model=List[SessionResponse])
 async def list_sessions(
     mindmap_id: uuid.UUID,
@@ -221,13 +262,22 @@ async def list_sessions(
 ):
     """Get all BCI sessions for a mind map (most recent first)"""
     _get_owned_mindmap(db, mindmap_id, user_id)
-    sessions = db.query(MindMapSession).filter(
-        MindMapSession.mindmap_id == mindmap_id
-    ).order_by(desc(MindMapSession.created_at)).offset(skip).limit(limit).all()
+    sessions = (
+        db.query(MindMapSession)
+        .filter(MindMapSession.mindmap_id == mindmap_id)
+        .order_by(desc(MindMapSession.created_at))
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
     return sessions
 
 
-@router.post("/mindmaps/{mindmap_id}/sessions", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/mindmaps/{mindmap_id}/sessions",
+    response_model=SessionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_session(
     mindmap_id: uuid.UUID,
     session: SessionCreate,

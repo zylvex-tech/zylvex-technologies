@@ -2,7 +2,6 @@
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
 
 from app.core.config import settings
 
@@ -12,7 +11,7 @@ engine = create_engine(
     pool_pre_ping=True,
     pool_size=20,
     max_overflow=30,
-    echo=settings.ENVIRONMENT == "development"
+    echo=settings.ENVIRONMENT == "development",
 )
 
 # Create session factory

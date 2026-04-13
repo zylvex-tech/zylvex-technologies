@@ -37,6 +37,7 @@ import uuid as _uuid_mod
 
 class GUID(TypeDecorator):
     """Platform-independent GUID type using String on SQLite."""
+
     impl = SAString
     cache_ok = True
 
@@ -85,6 +86,7 @@ client = TestClient(app)
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _create_mindmap(title="Test Map"):
     resp = client.post("/api/v1/mindmaps", json={"title": title})
     assert resp.status_code == 201, resp.text
@@ -104,6 +106,7 @@ NODE_PAYLOAD = {
 # 1. Health check
 # ---------------------------------------------------------------------------
 
+
 def test_health_check():
     response = client.get("/health")
     assert response.status_code == 200
@@ -113,6 +116,7 @@ def test_health_check():
 # ---------------------------------------------------------------------------
 # 2. Create mindmap
 # ---------------------------------------------------------------------------
+
 
 def test_create_mindmap():
     response = client.post("/api/v1/mindmaps", json={"title": "My Map"})
@@ -125,6 +129,7 @@ def test_create_mindmap():
 # ---------------------------------------------------------------------------
 # 3. List mindmaps — verify user scoping
 # ---------------------------------------------------------------------------
+
 
 def test_list_mindmaps():
     _create_mindmap("Map A")
@@ -142,13 +147,16 @@ def test_list_mindmaps():
 # 4. GET mindmap nodes — create mindmap + nodes, verify response
 # ---------------------------------------------------------------------------
 
+
 def test_get_mindmap_nodes():
     mm = _create_mindmap()
     mid = mm["id"]
 
     # Create two nodes
     client.post(f"/api/v1/mindmaps/{mid}/nodes", json=NODE_PAYLOAD)
-    client.post(f"/api/v1/mindmaps/{mid}/nodes", json={**NODE_PAYLOAD, "text": "Child Node"})
+    client.post(
+        f"/api/v1/mindmaps/{mid}/nodes", json={**NODE_PAYLOAD, "text": "Child Node"}
+    )
 
     response = client.get(f"/api/v1/mindmaps/{mid}/nodes")
     assert response.status_code == 200
@@ -162,6 +170,7 @@ def test_get_mindmap_nodes():
 # ---------------------------------------------------------------------------
 # 5. Create node
 # ---------------------------------------------------------------------------
+
 
 def test_create_node():
     mm = _create_mindmap()
@@ -177,6 +186,7 @@ def test_create_node():
 # 6. Update node — verify partial update
 # ---------------------------------------------------------------------------
 
+
 def test_update_node():
     mm = _create_mindmap()
     mid = mm["id"]
@@ -184,7 +194,9 @@ def test_update_node():
     node_id = node_resp.json()["id"]
 
     update_payload = {"text": "Updated Text", "focus_level": 50}
-    response = client.put(f"/api/v1/mindmaps/{mid}/nodes/{node_id}", json=update_payload)
+    response = client.put(
+        f"/api/v1/mindmaps/{mid}/nodes/{node_id}", json=update_payload
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["text"] == "Updated Text"
@@ -196,6 +208,7 @@ def test_update_node():
 # ---------------------------------------------------------------------------
 # 7. Delete node
 # ---------------------------------------------------------------------------
+
 
 def test_delete_node():
     mm = _create_mindmap()
@@ -214,6 +227,7 @@ def test_delete_node():
 # ---------------------------------------------------------------------------
 # 8. Save session
 # ---------------------------------------------------------------------------
+
 
 def test_save_session():
     mm = _create_mindmap()
@@ -234,6 +248,7 @@ def test_save_session():
 # ---------------------------------------------------------------------------
 # 9. Get sessions
 # ---------------------------------------------------------------------------
+
 
 def test_get_sessions():
     mm = _create_mindmap()
@@ -256,6 +271,7 @@ def test_get_sessions():
 # ---------------------------------------------------------------------------
 # 10. Unauthenticated request — expect 401
 # ---------------------------------------------------------------------------
+
 
 def test_unauthenticated_request():
     # Remove the user_id override to simulate missing auth
