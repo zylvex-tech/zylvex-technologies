@@ -1,17 +1,20 @@
 """Application configuration."""
 
-import os
+from pydantic_settings import BaseSettings
+from typing import List
 
 
-class Settings:
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL",
-        "postgresql://postgres:postgres@localhost:5433/mindmapper_db",
-    )
-    AUTH_SERVICE_URL: str = os.getenv("AUTH_SERVICE_URL", "http://localhost:8001")
-    ALLOWED_ORIGINS: str = os.getenv(
-        "ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:19006"
-    )
+class Settings(BaseSettings):
+    DATABASE_URL: str
+    AUTH_SERVICE_URL: str = "http://localhost:8001"
+    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:19006"
+
+    @property
+    def allowed_origins_list(self) -> List[str]:
+        return self.ALLOWED_ORIGINS.split(",")
+
+    class Config:
+        env_file = ".env"
 
 
 settings = Settings()

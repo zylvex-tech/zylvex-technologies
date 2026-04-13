@@ -1,11 +1,14 @@
 """Mind Mapper API endpoints."""
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from typing import List
 import uuid
 from datetime import datetime
+
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.db.session import get_db
 from app.models.mind_map import MindMap, Node, Session as MindMapSession
@@ -17,6 +20,7 @@ from app.schemas.mind_map import (
 from app.middleware.auth import get_current_user_id
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 
 def _get_owned_mindmap(db: Session, mindmap_id: uuid.UUID, user_id: uuid.UUID) -> MindMap:
@@ -38,7 +42,9 @@ def _get_owned_mindmap(db: Session, mindmap_id: uuid.UUID, user_id: uuid.UUID) -
 # ---------------------------------------------------------------------------
 
 @router.post("/mindmaps", response_model=MindMapResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("30/minute")
 async def create_mindmap(
+    request: Request,
     mindmap: MindMapCreate,
     user_id: uuid.UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db),
@@ -106,7 +112,9 @@ async def list_nodes(
 
 
 @router.post("/mindmaps/{mindmap_id}/nodes", response_model=NodeResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("30/minute")
 async def create_node(
+    request: Request,
     mindmap_id: uuid.UUID,
     node: NodeCreate,
     user_id: uuid.UUID = Depends(get_current_user_id),

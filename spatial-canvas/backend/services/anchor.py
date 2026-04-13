@@ -49,7 +49,10 @@ class AnchorService:
                            skip: int = 0, limit: int = 100) -> list:
         """Get anchors within radius of a location."""
         try:
-            # Convert km to degrees (approximate; 1° ≈ 111 km)
+            # Convert km to degrees (equatorial approximation; 1° ≈ 111 km).
+            # Note: Accuracy degrades at higher latitudes (~50% error at 60°N).
+            # For production use, migrate to Geography('POINT', srid=4326) and
+            # call ST_DWithin with radius in meters for meter-accurate results.
             radius_deg = radius_km / 111.0
 
             # Create point for distance calculation

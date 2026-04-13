@@ -8,6 +8,9 @@ on:
       - '**/*.txt'
       - '.github/**'
 
+permissions:
+  contents: read
+
 jobs:
   deploy-auth:
     runs-on: ubuntu-latest
@@ -45,9 +48,26 @@ jobs:
             docker-compose up -d --build
             echo "Spatial Canvas backend deployed successfully"
 
+  deploy-mind-mapper:
+    runs-on: ubuntu-latest
+    needs: deploy-auth
+    steps:
+      - name: Deploy Mind Mapper Backend
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            cd /opt/zylvex/mind-mapper/backend-services
+            git pull origin main
+            docker-compose down
+            docker-compose up -d --build
+            echo "Mind Mapper backend deployed successfully"
+
   notify:
     runs-on: ubuntu-latest
-    needs: [deploy-auth, deploy-spatial-canvas]
+    needs: [deploy-auth, deploy-spatial-canvas, deploy-mind-mapper]
     if: always()
     steps:
       - name: Send Slack notification

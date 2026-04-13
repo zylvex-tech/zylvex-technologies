@@ -11,7 +11,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
 
 os.environ.setdefault("DATABASE_URL", "sqlite://")
-os.environ.setdefault("JWT_SECRET_KEY", "test-secret-for-ci")
 os.environ.setdefault("AUTH_SERVICE_URL", "http://localhost:8001")
 
 from app.main import app

@@ -2,9 +2,12 @@
 
 from typing import List
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 import logging
+
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.db.session import get_db
 from app.api.deps import get_current_user_id, get_current_user_name
@@ -13,6 +16,7 @@ from services.anchor import AnchorService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post(
@@ -22,7 +26,9 @@ logger = logging.getLogger(__name__)
     summary="Create a new anchor",
     description="Create a new spatial anchor with content and location data. Requires authentication."
 )
+@limiter.limit("30/minute")
 async def create_anchor(
+    request: Request,
     anchor_data: AnchorCreate,
     user_id: UUID = Depends(get_current_user_id),
     db: Session = Depends(get_db)
