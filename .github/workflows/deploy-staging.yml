@@ -13,10 +13,14 @@ permissions:
 
 jobs:
   deploy-auth:
-    if: ${{ secrets.STAGING_HOST != '' && secrets.STAGING_USER != '' && secrets.STAGING_SSH_KEY != '' }}
     runs-on: ubuntu-latest
     steps:
+      - name: Skip if no staging config
+        if: ${{ secrets.STAGING_HOST == '' }}
+        run: echo "Skipping deployment — no STAGING_HOST configured"
+
       - name: Deploy Auth Service
+        if: ${{ secrets.STAGING_HOST != '' }}
         uses: appleboy/ssh-action@v1.0.3
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -33,11 +37,15 @@ jobs:
             echo "Auth service deployed successfully"
 
   deploy-spatial-canvas:
-    if: ${{ secrets.STAGING_HOST != '' && secrets.STAGING_USER != '' && secrets.STAGING_SSH_KEY != '' }}
     runs-on: ubuntu-latest
     needs: deploy-auth
     steps:
+      - name: Skip if no staging config
+        if: ${{ secrets.STAGING_HOST == '' }}
+        run: echo "Skipping deployment — no STAGING_HOST configured"
+
       - name: Deploy Spatial Canvas Backend
+        if: ${{ secrets.STAGING_HOST != '' }}
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.STAGING_HOST }}
@@ -51,11 +59,15 @@ jobs:
             echo "Spatial Canvas backend deployed successfully"
 
   deploy-mind-mapper:
-    if: ${{ secrets.STAGING_HOST != '' && secrets.STAGING_USER != '' && secrets.STAGING_SSH_KEY != '' }}
     runs-on: ubuntu-latest
     needs: deploy-auth
     steps:
+      - name: Skip if no staging config
+        if: ${{ secrets.STAGING_HOST == '' }}
+        run: echo "Skipping deployment — no STAGING_HOST configured"
+
       - name: Deploy Mind Mapper Backend
+        if: ${{ secrets.STAGING_HOST != '' }}
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.STAGING_HOST }}
