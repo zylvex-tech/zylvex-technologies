@@ -95,3 +95,44 @@ export interface SessionCreate {
   node_count: number;
   focus_timeline: number[];
 }
+
+// ─── Notifications ──────────────────────────────────────────────────────────
+
+export type NotificationType =
+  | 'follow'
+  | 'reaction'
+  | 'nearby_anchor'
+  | 'collaboration_invite';
+
+export interface NotificationItem {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  metadata: Record<string, unknown>;
+  read: boolean;
+  created_at: string;
+}
+
+export interface PaginatedNotifications {
+  items: NotificationItem[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+// ─── Realtime WebSocket Events ───────────────────────────────────────────────
+
+export type WsEventType =
+  | 'connected'
+  | 'ping'
+  | 'new_follow'
+  | 'new_reaction'
+  | 'new_nearby_anchor'
+  | 'new_collaboration_invite';
+
+export interface WsEvent {
+  event: WsEventType;
+  data?: Record<string, unknown>;
+}

@@ -1,13 +1,143 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useRef, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useAuth } from '../store/auth';
+import { useNotifications } from '../store/notifications';
 import { logout as apiLogout } from '../api/auth';
 import { getStoredRefreshToken } from '../api/client';
 import ThemeToggle from './ThemeToggle';
 
 interface AppShellProps {
   children: ReactNode;
+}
+
+// ─── Notification Bell + Dropdown ────────────────────────────────────────────
+
+function NotificationBell() {
+  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  const recent = notifications.slice(0, 10);
+
+  function typeIcon(type: string) {
+    switch (type) {
+      case 'follow':
+        return '👤';
+      case 'reaction':
+        return '❤️';
+      case 'nearby_anchor':
+        return '📍';
+      case 'collaboration_invite':
+        return '🤝';
+      default:
+        return '🔔';
+    }
+  }
+
+  function timeAgo(iso: string) {
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60_000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  }
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="relative p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-white/6 transition-all duration-200"
+        aria-label="Notifications"
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round"
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
+        {unreadCount > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-indigo-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="absolute right-0 top-full mt-2 w-80 glass-dark border border-white/8 rounded-2xl shadow-2xl z-50 overflow-hidden"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/8">
+              <span className="text-sm font-semibold text-slate-200">Notifications</span>
+              {unreadCount > 0 && (
+                <button
+                  onClick={() => { markAllRead(); }}
+                  className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                >
+                  Mark all read
+                </button>
+              )}
+            </div>
+
+            {/* List */}
+            <div className="max-h-[400px] overflow-y-auto">
+              {recent.length === 0 ? (
+                <div className="py-10 text-center">
+                  <p className="text-slate-500 text-sm">No notifications yet</p>
+                </div>
+              ) : (
+                recent.map((n) => (
+                  <button
+                    key={n.id}
+                    onClick={() => { if (!n.read) markRead(n.id); }}
+                    className={`w-full text-left px-4 py-3 border-b border-white/5 transition-colors last:border-0 ${
+                      n.read
+                        ? 'hover:bg-white/4'
+                        : 'bg-indigo-500/8 hover:bg-indigo-500/12'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-lg flex-shrink-0 mt-0.5">{typeIcon(n.type)}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className={`text-sm font-medium truncate ${n.read ? 'text-slate-400' : 'text-slate-200'}`}>
+                            {n.title}
+                          </p>
+                          {!n.read && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 flex-shrink-0" />
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{n.body}</p>
+                        <p className="text-xs text-slate-600 mt-1">{timeAgo(n.created_at)}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 const navItems = [
@@ -141,8 +271,14 @@ export default function AppShell({ children }: AppShellProps) {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 overflow-y-auto">
-        {children}
+      <main className="flex-1 overflow-y-auto flex flex-col">
+        {/* Top bar with notification bell */}
+        <div className="flex-shrink-0 h-14 border-b border-white/8 flex items-center justify-end px-6 gap-3">
+          <NotificationBell />
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          {children}
+        </div>
       </main>
     </div>
   );
