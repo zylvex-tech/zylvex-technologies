@@ -220,7 +220,7 @@ export function NotificationsProvider({
         wsRef.current.close();
       }
     };
-  }, [authState.user?.id, authState.accessToken]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [authState.user?.id, authState.accessToken, loadNotifications, connectWs]);
 
   return (
     <NotificationsContext.Provider
