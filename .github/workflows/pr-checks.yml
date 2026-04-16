@@ -86,6 +86,8 @@ jobs:
 
   web-app-ci:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: |
       contains(github.event.pull_request.changed_files != 0, 'web-app') ||
       true
