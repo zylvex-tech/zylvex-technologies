@@ -17,10 +17,15 @@ pydantic-settings==2.1.0
 # Validation
 pydantic==2.5.0
 
+# HTTP client
+httpx==0.25.1
+
+# Redis cache
+redis>=5.0.0
+
 # Testing
 pytest==7.4.3
 pytest-asyncio==0.21.1
-httpx==0.25.1
 
 # Rate limiting
 slowapi>=0.1.9

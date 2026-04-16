@@ -1,15 +1,21 @@
 """Dependencies for API endpoints."""
 
+import logging
+
 import httpx
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from uuid import UUID
-import os
+
+from app.core.config import settings
+from app.core.token_cache import get_cached_user, make_redis_client, set_cached_user
+
+logger = logging.getLogger(__name__)
 
 security = HTTPBearer()
 
-# Auth service configuration
-AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://localhost:8001")
+# Build the Redis client once at module load time (None if Redis is unavailable).
+_redis_client = make_redis_client(settings.REDIS_URL) if settings.REDIS_URL else None
 
 
 async def get_current_user(
@@ -18,8 +24,9 @@ async def get_current_user(
     """
     Validate JWT token with auth service and return user data.
 
-    This function calls the auth service's /auth/me endpoint to validate
-    the token and get user information.
+    Checks the Redis token cache first (TTL = 300 s).  On cache hit the auth
+    service is not contacted.  If Redis is unreachable the function falls
+    through transparently to the auth service.
     """
     token = credentials.credentials
 
@@ -30,17 +37,25 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    # --- Redis cache lookup ---
+    cached = get_cached_user(_redis_client, token)
+    if cached is not None:
+        # Reconstruct a minimal user dict from cached data so callers get
+        # the same shape regardless of cache hit/miss.
+        return {"id": cached["user_id"], "roles": cached.get("roles", [])}
+
+    # --- Cache miss: call auth service ---
     try:
-        # Call auth service to validate token
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{AUTH_SERVICE_URL}/auth/me",
+                f"{settings.AUTH_SERVICE_URL}/auth/me",
                 headers={"Authorization": f"Bearer {token}"},
                 timeout=10.0,
             )
 
             if response.status_code == 200:
                 user_data = response.json()
+                set_cached_user(_redis_client, token, user_data)
                 return user_data
             elif response.status_code == 401:
                 raise HTTPException(

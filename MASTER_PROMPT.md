@@ -44,9 +44,9 @@ infrastructure/kubernetes|terraform|monitoring/  STUB (empty)
 docs/architecture/             ADRs + auth contract (3 files)
 docs/business|development/     STUB (empty)
 tests/                         STUB (empty)
-scripts/                       cleanup-tokens.sh
+scripts/                       cleanup-tokens.sh, check-secrets.sh (pre-commit hook)
 docs-site/                     Docusaurus v3 (TypeScript) documentation hub, port 3001
-docker-compose.full-stack.yml  One-command local stack (6 app services + 5 DBs + Redis + web-app + docs)
+docker-compose.full-stack.yml  One-command local stack (6 app services + 5 DBs + Redis pub/sub + Redis cache + web-app + docs)
 ```
 
 ---
@@ -104,13 +104,14 @@ tests/
 | `shared/social/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `SPATIAL_CANVAS_URL`, `ALLOWED_ORIGINS` |
 | `shared/realtime/.env.example` | `AUTH_SERVICE_URL`, `REDIS_URL`, `ALLOWED_ORIGINS`, `HEARTBEAT_INTERVAL=30` |
 | `shared/notifications/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `REALTIME_SERVICE_URL`, `SENDGRID_API_KEY`, `EMAIL_FROM`, `ALLOWED_ORIGINS` |
-| `spatial-canvas/backend/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `ALLOWED_ORIGINS` |
-| `mind-mapper/backend-services/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `JWT_SECRET`, `PORT=8002` |
+| `spatial-canvas/backend/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `REDIS_URL`, `ALLOWED_ORIGINS` |
+| `mind-mapper/backend-services/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `REDIS_URL`, `PORT=8002` |
 | `mind-mapper/mobile-bci/.env.example` | `EXPO_PUBLIC_API_URL=http://localhost:8002`, `EXPO_PUBLIC_AUTH_URL=http://localhost:8001` |
 | `spatial-canvas/mobile/.env.example` | `EXPO_PUBLIC_API_URL=http://localhost:8000`, `EXPO_PUBLIC_AUTH_URL=http://localhost:8001` |
 | `web-app/.env.example` | `VITE_AUTH_API_URL`, `VITE_SPATIAL_API_URL`, `VITE_MIND_MAPPER_API_URL`, `VITE_NOTIFICATIONS_API_URL=http://localhost:8005`, `VITE_REALTIME_WS_URL=ws://localhost:8004` |
+| `.env.example` (root) | `JWT_SECRET`, `AUTH_DB_PASSWORD`, `SPATIAL_DB_PASSWORD`, `MM_DB_PASSWORD`, `SOCIAL_DB_PASSWORD`, `NOTIF_DB_PASSWORD`, `REDIS_URL`, `SENDGRID_API_KEY`, `EMAIL_FROM` |
 
-**Critical**: Auth service uses `JWT_SECRET` (not `JWT_SECRET_KEY`).
+**Critical**: Auth service uses `JWT_SECRET` (not `JWT_SECRET_KEY`). All DB passwords are now parameterised via `${VAR:-default}` in docker-compose — set them in root `.env` before running compose in production.
 
 ---
 
@@ -133,7 +134,7 @@ Commit format: Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `refacto
 ## 9. Known Issues
 
 1. **PostGIS Geometry not Geography** (`ADR-002`): `Anchor.location` uses `Geometry`; degree-based radius approximation is ~50% wrong at 60°N. Fix: migrate to `Geography`, use `ST_DWithin` with meters.
-2. **No auth token caching** (`ADR-001`): Every request hits auth service → PostgreSQL. No Redis/TTL cache; auth service is a single point of failure.
+2. ~~**No auth token caching**~~ **✅ Fixed**: Redis token cache added to spatial-canvas and mind-mapper backends. Cache key: sha256(token), TTL: 300 s, graceful fallback to auth service if Redis is unreachable.
 3. **No email verification**: `User.is_verified` exists in DB but is never set; no verification email sent on register.
 4. **No password reset**: No forgot-password or reset-password endpoints.
 5. ~~**Mind map editor is a list, not a canvas**~~: **✅ Fixed — Sprint 2** — Full ReactFlow canvas at `/mind-mapper/:mapId` with glassmorphism nodes, drag/drop, inline edit, focus overlay, export.
@@ -147,7 +148,7 @@ Commit format: Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `refacto
 
 1. Email verification (`POST /auth/verify-email`, send token on register)
 2. Password reset (`POST /auth/forgot-password`, `POST /auth/reset-password`)
-3. Redis cache for auth token verification (TTL = access token lifetime)
+3. ~~Redis cache for auth token verification (TTL = access token lifetime)~~ **✅ DONE** — Redis `cache` service added to docker-compose. `shared/auth/app/core/token_cache.py` + per-service `token_cache.py` utilities. `spatial-canvas/backend/app/api/deps.py` and `mind-mapper/backend-services/app/middleware/auth.py` check Redis (key: sha256(token), TTL 300 s) before calling `/auth/verify`. Graceful fallback if Redis is unreachable. 18 new tests (10 cache-unit + 4 SC middleware + 4 MM middleware).
 4. Migrate PostGIS `Geometry` → `Geography` (Alembic migration)
 5. ~~Social graph service: follow/unfollow, follower/following lists~~ **✅ DONE** — `/shared/social/` port 8003: full follow graph, emoji reactions, nearby+trending feeds, 16 tests, Dockerfile, docker-compose entry.
 6. Anchor media uploads: S3/GCS signed URLs for image/video/audio
