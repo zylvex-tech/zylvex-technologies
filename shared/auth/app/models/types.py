@@ -20,7 +20,12 @@ class GUID(TypeDecorator):
         if value is None:
             return value
         if not isinstance(value, uuid.UUID):
-            value = uuid.UUID(str(value))
+            try:
+                value = uuid.UUID(str(value))
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid UUID value for GUID column: {value}"
+                ) from exc
         if dialect.name == "postgresql":
             return value
         return str(value)
@@ -30,4 +35,9 @@ class GUID(TypeDecorator):
             return value
         if isinstance(value, uuid.UUID):
             return value
-        return uuid.UUID(str(value))
+        try:
+            return uuid.UUID(str(value))
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"Invalid UUID value loaded from database: {value}"
+            ) from exc
