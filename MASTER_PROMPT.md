@@ -54,7 +54,8 @@ docker-compose.full-stack.yml  One-command local stack (3 backends + 3 DBs + web
 - **Mind Mapper backend**: mind map CRUD, hierarchical node tree (parent_id), BCI session recording (avg_focus, duration, focus_timeline JSON), pagination, ownership checks, rate limiting, 10 tests, Dockerfile, CI
 - **Mind Mapper mobile**: Login/Register/Home/MindMapEditor/SessionStats screens, focus slider BCI simulator, color-coded nodes (green/yellow/red), session stats summary, full API integration
 - **Spatial Canvas mobile**: camera view with crosshair, tap-to-place anchor with GPS, nearby anchors list, auth screens
-- **Web App**: React 18 + Vite + TypeScript + TailwindCSS + Framer Motion at `/web-app/`. Landing page (animated gradient, product cards, waitlist form), auth pages (/login, /register, /forgot-password), dashboard with sidebar, Mind Mapper canvas stub, Spatial Canvas react-leaflet map with anchor pins + detail drawer, social feed skeleton, full typed API client, Dockerfile + nginx, CI in pr-checks.yml
+- **Web App**: React 18 + Vite + TypeScript + TailwindCSS + Framer Motion at `/web-app/`. Landing page (animated gradient, product cards, waitlist form), auth pages (/login, /register, /forgot-password), dashboard with sidebar, Mind Mapper canvas (**Sprint 2**: full ReactFlow canvas at `/mind-mapper/:mapId` — glassmorphism nodes, animated gradient edges, minimap, FAB drawer, inline edit, drag-to-save, focus overlay, PNG+JSON export, dark/light mode), Spatial Canvas react-leaflet map with anchor pins + detail drawer, social feed skeleton, full typed API client, Dockerfile + nginx, CI in pr-checks.yml
+- **Jupyter Notebooks**: Three analytics notebooks at `/docs/notebooks/` — mind map 3D visualization (NetworkX + Plotly), BCI focus analysis (time-series, peaks, heatmap, 3D surface), Spatial Canvas analytics (Folium map, heatmap, bar/time-series, 3D scatter). All zero-dependency, fully executable, with ipywidgets Sandbox sections.
 - **CI/CD**: 6 GitHub Actions workflows + web-app CI in pr-checks.yml, Codecov integration, staging SSH deploy
 - **Docker Compose full-stack**: 4 app services + 4 DBs with healthchecks, shared network
 
@@ -124,7 +125,7 @@ Commit format: Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `refacto
 2. **No auth token caching** (`ADR-001`): Every request hits auth service → PostgreSQL. No Redis/TTL cache; auth service is a single point of failure.
 3. **No email verification**: `User.is_verified` exists in DB but is never set; no verification email sent on register.
 4. **No password reset**: No forgot-password or reset-password endpoints.
-5. **Mind map editor is a list, not a canvas**: Node `x`/`y` stored in DB but mobile renders a flat `ScrollView` — no graph layout engine.
+5. ~~**Mind map editor is a list, not a canvas**~~: **✅ Fixed — Sprint 2** — Full ReactFlow canvas at `/mind-mapper/:mapId` with glassmorphism nodes, drag/drop, inline edit, focus overlay, export.
 6. ~~No web frontend~~: **✅ Fixed** — `/web-app/` React 18 + Vite app covers both products (Sprint 1).
 7. ~~**No social features**~~: **✅ Fixed** — `/shared/social/` FastAPI microservice on port 8003. Follow/unfollow (idempotent), paginated followers/following lists, emoji reactions (👍❤️🔥💡, unique per user/content), nearby feed (integrates with Spatial Canvas), trending feed (7-day window), JWT auth via shared auth service, Alembic migrations, 16 tests, Dockerfile.
 8. **Media uploads incomplete**: Anchor model supports `image|video|audio` content types but only `text` works; no file storage.
@@ -141,6 +142,8 @@ Commit format: Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `refacto
 6. Anchor media uploads: S3/GCS signed URLs for image/video/audio
 7. WebSocket layer: anchor proximity alerts, live mind map co-editing
 8. ~~Web frontend for Mind Mapper (React + React Flow canvas)~~ **✅ DONE — Sprint 1** — Web app at `/web-app/` (React 18 + Vite + TypeScript + TailwindCSS + Framer Motion). Landing page, auth pages, dashboard, Mind Mapper canvas stub, Spatial Canvas react-leaflet map with anchor pins, social feed skeleton, full typed API client, Docker + nginx, CI integrated.
+   **✅ DONE — Sprint 2 (Part A)** — Full interactive ReactFlow mind map canvas at `/web-app/src/pages/MindMap.tsx` (route `/mind-mapper/:mapId`): glassmorphism nodes with focus score badge + color ring (green/yellow/red), animated gradient bezier edges, zoom/pan/MiniMap, FAB + slide-in drawer for adding nodes (title + parent selector), double-click inline edit, drag-to-reposition (PUT API), focus overlay mode (node size by focus_level), PNG export (html-to-image) + JSON export, dark/light mode.
+   **✅ DONE — Sprint 2 (Part B)** — Three Jupyter notebooks at `/docs/notebooks/`: `mind_map_3d_visualization.ipynb` (3D Plotly + NetworkX spring layout, hover tooltips, export HTML), `bci_focus_analysis.ipynb` (time-series, rolling avg, peak detection, heatmap, 3D surface), `spatial_canvas_analytics.ipynb` (Folium cluster map, reaction heatmap, bar/time-series charts, 3D scatter). Each has pip install block, hardcoded sample data, and ipywidgets Sandbox section. `/docs/notebooks/README.md` + `requirements.txt` included.
 9. Kubernetes manifests + Helm charts
 10. Terraform IaC (AWS/GCP)
 11. Monitoring: Prometheus + Grafana + alerting

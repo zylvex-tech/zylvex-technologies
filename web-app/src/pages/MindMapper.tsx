@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { listMindmaps, createMindmap, deleteMindmap } from '../api/mindmaps';
 import { ApiError } from '../api/client';
@@ -21,6 +22,7 @@ export default function MindMapper() {
   const [newTitle, setNewTitle] = useState('');
   const [creating, setCreating] = useState(false);
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     listMindmaps()
@@ -178,9 +180,19 @@ export default function MindMapper() {
                   <h3 className="text-lg font-semibold text-slate-200 mb-2">
                     {selected.node_count === 0 ? 'Empty canvas' : `${selected.node_count} nodes`}
                   </h3>
-                  <p className="text-slate-500 text-sm max-w-xs">
-                    The interactive node editor is coming soon. Connect a BCI device to start mapping.
+                  <p className="text-slate-500 text-sm max-w-xs mb-6">
+                    Open the interactive canvas to visualize, edit and arrange your mind map nodes.
                   </p>
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => navigate(`/mind-mapper/${selected.id}`)}
+                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-sm transition-colors flex items-center gap-2 glow-primary-hover"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                    </svg>
+                    Open Canvas
+                  </motion.button>
                 </div>
               </motion.div>
             ) : (
