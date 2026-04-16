@@ -87,6 +87,21 @@ services:
     ports: ["8002:8002"]
     networks: [zylvex]
 
+  web-app:
+    build:
+      context: ./web-app
+      args:
+        VITE_AUTH_API_URL: http://localhost:8001
+        VITE_SPATIAL_API_URL: http://localhost:8000
+        VITE_MIND_MAPPER_API_URL: http://localhost:8002
+    container_name: zylvex-web
+    depends_on:
+      - auth-service
+      - spatial-canvas-backend
+      - mind-mapper-backend
+    ports: ["3000:80"]
+    networks: [zylvex]
+
 networks:
   zylvex:
     name: zylvex-network

@@ -33,12 +33,13 @@ spatial-canvas/desktop/        STUB (empty)
 mind-mapper/backend-services/  FastAPI mind map + node tree + BCI session API
 mind-mapper/mobile-bci/        React Native BCI app with focus slider (Expo, TS)
 mind-mapper/desktop-studio|ml-models/  STUB (empty)
+web-app/                       React 18 + Vite + TS + Tailwind web frontend (both products)
 infrastructure/kubernetes|terraform|monitoring/  STUB (empty)
 docs/architecture/             ADRs + auth contract (3 files)
 docs/business|development/     STUB (empty)
 tests/                         STUB (empty)
 scripts/                       cleanup-tokens.sh
-docker-compose.full-stack.yml  One-command local stack (3 backends + 3 DBs)
+docker-compose.full-stack.yml  One-command local stack (3 backends + 3 DBs + web-app)
 ```
 
 ---
@@ -50,7 +51,8 @@ docker-compose.full-stack.yml  One-command local stack (3 backends + 3 DBs)
 - **Mind Mapper backend**: mind map CRUD, hierarchical node tree (parent_id), BCI session recording (avg_focus, duration, focus_timeline JSON), pagination, ownership checks, rate limiting, 10 tests, Dockerfile, CI
 - **Mind Mapper mobile**: Login/Register/Home/MindMapEditor/SessionStats screens, focus slider BCI simulator, color-coded nodes (green/yellow/red), session stats summary, full API integration
 - **Spatial Canvas mobile**: camera view with crosshair, tap-to-place anchor with GPS, nearby anchors list, auth screens
-- **CI/CD**: 6 GitHub Actions workflows, Codecov integration, staging SSH deploy
+- **Web App**: React 18 + Vite + TypeScript + TailwindCSS + Framer Motion at `/web-app/`. Landing page (animated gradient, product cards, waitlist form), auth pages (/login, /register, /forgot-password), dashboard with sidebar, Mind Mapper canvas stub, Spatial Canvas react-leaflet map with anchor pins + detail drawer, social feed skeleton, full typed API client, Dockerfile + nginx, CI in pr-checks.yml
+- **CI/CD**: 6 GitHub Actions workflows + web-app CI in pr-checks.yml, Codecov integration, staging SSH deploy
 - **Docker Compose full-stack**: 3 app services + 3 DBs with healthchecks, shared network
 
 ---
@@ -118,7 +120,7 @@ Commit format: Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `refacto
 3. **No email verification**: `User.is_verified` exists in DB but is never set; no verification email sent on register.
 4. **No password reset**: No forgot-password or reset-password endpoints.
 5. **Mind map editor is a list, not a canvas**: Node `x`/`y` stored in DB but mobile renders a flat `ScrollView` — no graph layout engine.
-6. **No web frontend**: No browser UI for either product.
+6. ~~No web frontend~~: **✅ Fixed** — `/web-app/` React 18 + Vite app covers both products (Sprint 1).
 7. **No social features**: No follow graph, feeds, sharing, reactions, or discovery.
 8. **Media uploads incomplete**: Anchor model supports `image|video|audio` content types but only `text` works; no file storage.
 
@@ -133,7 +135,7 @@ Commit format: Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `refacto
 5. Social graph service: follow/unfollow, follower/following lists
 6. Anchor media uploads: S3/GCS signed URLs for image/video/audio
 7. WebSocket layer: anchor proximity alerts, live mind map co-editing
-8. Web frontend for Mind Mapper (React + React Flow canvas)
+8. ~~Web frontend for Mind Mapper (React + React Flow canvas)~~ **✅ DONE — Sprint 1** — Web app at `/web-app/` (React 18 + Vite + TypeScript + TailwindCSS + Framer Motion). Landing page, auth pages, dashboard, Mind Mapper canvas stub, Spatial Canvas react-leaflet map with anchor pins, social feed skeleton, full typed API client, Docker + nginx, CI integrated.
 9. Kubernetes manifests + Helm charts
 10. Terraform IaC (AWS/GCP)
 11. Monitoring: Prometheus + Grafana + alerting
