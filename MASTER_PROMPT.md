@@ -45,7 +45,8 @@ docs/architecture/             ADRs + auth contract (3 files)
 docs/business|development/     STUB (empty)
 tests/                         STUB (empty)
 scripts/                       cleanup-tokens.sh
-docker-compose.full-stack.yml  One-command local stack (5 app services + 5 DBs + Redis + web-app)
+docs-site/                     Docusaurus v3 (TypeScript) documentation hub, port 3001
+docker-compose.full-stack.yml  One-command local stack (6 app services + 5 DBs + Redis + web-app + docs)
 ```
 
 ---
@@ -63,7 +64,8 @@ docker-compose.full-stack.yml  One-command local stack (5 app services + 5 DBs +
 - **Web App**: React 18 + Vite + TypeScript + TailwindCSS + Framer Motion at `/web-app/`. Landing page (animated gradient, product cards, waitlist form), auth pages (/login, /register, /forgot-password), dashboard with sidebar, Mind Mapper canvas (**Sprint 2**: full ReactFlow canvas at `/mind-mapper/:mapId` — glassmorphism nodes, animated gradient edges, minimap, FAB drawer, inline edit, drag-to-save, focus overlay, PNG+JSON export, dark/light mode), Spatial Canvas react-leaflet map with anchor pins + detail drawer, social feed skeleton, full typed API client, Dockerfile + nginx, CI in pr-checks.yml. **Sprint 3**: NotificationsContext (WebSocket to realtime gateway, toast on events), notification bell icon in AppShell top bar with unread count badge, dropdown showing last 10 notifications with mark-read.
 - **Jupyter Notebooks**: Three analytics notebooks at `/docs/notebooks/` — mind map 3D visualization (NetworkX + Plotly), BCI focus analysis (time-series, peaks, heatmap, 3D surface), Spatial Canvas analytics (Folium map, heatmap, bar/time-series, 3D scatter). All zero-dependency, fully executable, with ipywidgets Sandbox sections.
 - **CI/CD**: 6 GitHub Actions workflows + web-app CI in pr-checks.yml, Codecov integration, staging SSH deploy
-- **Docker Compose full-stack**: 4 app services + 4 DBs with healthchecks, shared network
+- **Docker Compose full-stack**: 6 app services + 5 DBs + Redis + web-app + docs-site with healthchecks, shared network
+- **Documentation site**: Docusaurus v3 (TypeScript) at `/docs-site/`, port 3001. Custom Zylvex theme (navy #1B2A4A, accent #6C63FF). Sections: getting-started (introduction, quickstart, architecture-overview with Mermaid), api-reference (auth, spatial-canvas, mind-mapper, social), guides (mobile-setup, database-migrations, testing-guide, contributing), business (product-vision, roadmap with Mermaid Gantt, monetization, competitive-analysis with Mermaid quadrant). Algolia DocSearch config stub. Dockerfile + nginx on port 3001.
 
 ---
 
@@ -157,7 +159,8 @@ Commit format: Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `refacto
 10. Terraform IaC (AWS/GCP)
 11. Monitoring: Prometheus + Grafana + alerting
 12. ~~Notifications service (push, email, in-app)~~ **✅ DONE — Sprint 3 (Part B+C)** — `/shared/notifications/` FastAPI service on port 8005. `POST /notifications/send` (internal), `GET /notifications/me` (paginated), `POST /notifications/mark-read/{id}`, `POST /notifications/mark-all-read`. PostgreSQL table: id, user_id, type, title, body, metadata JSONB, read, created_at. Types: follow, reaction, nearby_anchor, collaboration_invite. SendGrid HTML email for follow+reaction (dark-themed, Zylvex branded). Push notification stub (APNs/FCM TODO). Alembic migrations, 10 tests, Dockerfile. Web app: NotificationsContext (WebSocket + toast on events), bell icon in AppShell top bar with unread badge, dropdown last 10 notifications, mark-read. Docker Compose: added Redis + realtime-service + notifications-service + postgres-notifications.
-13. Analytics service (event pipeline, funnels, retention)
-14. Billing service (Stripe, Free/Pro/Team tiers)
-15. Real BCI hardware adapter (Neurosity/OpenBCI/Muse)
-16. E2E tests: Playwright (web) + Detox (mobile)
+13. ~~Documentation site~~ **✅ DONE** — `/docs-site/` Docusaurus v3 (TypeScript), port 3001. Custom Zylvex theme (navy #1B2A4A, accent #6C63FF). 12 docs across getting-started, api-reference, guides, business sections. Mermaid diagrams (architecture, sequence, Gantt, quadrant). Algolia DocSearch config stub. Dockerfile + nginx. Added to docker-compose.full-stack.yml.
+14. Analytics service (event pipeline, funnels, retention)
+15. Billing service (Stripe, Free/Pro/Team tiers)
+16. Real BCI hardware adapter (Neurosity/OpenBCI/Muse)
+17. E2E tests: Playwright (web) + Detox (mobile)

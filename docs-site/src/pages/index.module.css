@@ -1,0 +1,97 @@
+.heroBanner {
+  padding: 5rem 0;
+  background: linear-gradient(135deg, #1B2A4A 0%, #0d1520 60%, #1a1040 100%);
+  overflow: hidden;
+  position: relative;
+}
+
+.heroContent {
+  position: relative;
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.heroBadge {
+  display: inline-block;
+  padding: 4px 16px;
+  background: rgba(108, 99, 255, 0.2);
+  border: 1px solid rgba(108, 99, 255, 0.4);
+  border-radius: 100px;
+  color: #a09bff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+.heroTitle {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  margin-bottom: 1rem;
+  line-height: 1.1;
+}
+
+.heroSubtitle {
+  font-size: 1.25rem;
+  color: #9aabb8;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.heroSubtitle strong {
+  color: #c5d2e0;
+}
+
+.heroButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.features {
+  padding: 5rem 0;
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.featureCard {
+  display: block;
+  padding: 2rem;
+  border: 1px solid rgba(108, 99, 255, 0.15);
+  border-radius: 12px;
+  text-decoration: none !important;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.featureCard:hover {
+  border-color: rgba(108, 99, 255, 0.5);
+  box-shadow: 0 8px 30px rgba(108, 99, 255, 0.15);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.featureEmoji {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.featureTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.featureDescription {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+}
