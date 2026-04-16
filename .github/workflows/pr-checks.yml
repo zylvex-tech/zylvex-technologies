@@ -17,16 +17,29 @@ jobs:
 
       - name: Configure git
         run: |
+          echo "Configuring git identity for workflow operations..."
           git config --global user.name 'github-actions[bot]'
           git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          echo "✅ Git configuration complete"
 
-      - name: Fetch origin
+      - name: Fetch base references
         run: |
-          git fetch origin main --depth=1 || echo "⚠️ Warning: Could not fetch origin/main"
+          echo "Fetching base branch references..."
+          git fetch --no-tags --prune origin +refs/heads/main:refs/remotes/origin/main 2>/dev/null || {
+            echo "⚠️ Warning: Could not fetch origin/main. Falling back to local history if needed."
+          }
+          if git rev-parse --verify --quiet origin/main >/dev/null; then
+            echo "✅ origin/main is available for diff operations"
+          else
+            echo "⚠️ origin/main is unavailable; changed-file analysis will use fallback logic"
+          fi
 
       - name: Check PR description
+        env:
+          PR_BODY: ${{ github.event.pull_request.body || '' }}
         run: |
-          if [ -z "${{ github.event.pull_request.body }}" ]; then
+          if [[ -z "${PR_BODY//[[:space:]]/}" ]]; then
             echo "❌ PR description is empty. Please add a description."
             exit 1
           fi
@@ -44,14 +57,25 @@ jobs:
       - name: Analyze changed files
         id: changed-files
         run: |
+          echo "Analyzing changed files..."
+
+          if git rev-parse --verify --quiet origin/main >/dev/null && git diff --name-only origin/main...HEAD >/tmp/changed-files.txt 2>/dev/null; then
+            echo "Using origin/main...HEAD diff range"
+          elif git rev-parse --verify --quiet HEAD~1 >/dev/null && git diff --name-only HEAD~1..HEAD >/tmp/changed-files.txt 2>/dev/null; then
+            echo "⚠️ Using fallback diff range HEAD~1..HEAD"
+          else
+            echo "⚠️ Unable to determine changed files from git history. Using empty change set."
+            : > /tmp/changed-files.txt
+          fi
+
           echo "Changed files:"
-          git diff --name-only origin/main...HEAD 2>/dev/null || echo "No changes to analyze"
-          
-          CHANGED_AUTH=$(git diff --name-only origin/main...HEAD 2>/dev/null | grep -q '^shared/auth/' && echo 'true' || echo 'false')
-          CHANGED_SPATIAL=$(git diff --name-only origin/main...HEAD 2>/dev/null | grep -q '^spatial-canvas/backend/' && echo 'true' || echo 'false')
-          CHANGED_MOBILE=$(git diff --name-only origin/main...HEAD 2>/dev/null | grep -q '^spatial-canvas/mobile/' && echo 'true' || echo 'false')
-          CHANGED_WEB=$(git diff --name-only origin/main...HEAD 2>/dev/null | grep -q '^web-app/' && echo 'true' || echo 'false')
-          
+          cat /tmp/changed-files.txt
+
+          CHANGED_AUTH=$(grep -q '^shared/auth/' /tmp/changed-files.txt && echo 'true' || echo 'false')
+          CHANGED_SPATIAL=$(grep -q '^spatial-canvas/backend/' /tmp/changed-files.txt && echo 'true' || echo 'false')
+          CHANGED_MOBILE=$(grep -q '^spatial-canvas/mobile/' /tmp/changed-files.txt && echo 'true' || echo 'false')
+          CHANGED_WEB=$(grep -q '^web-app/' /tmp/changed-files.txt && echo 'true' || echo 'false')
+
           echo "auth_changed=$CHANGED_AUTH" >> $GITHUB_OUTPUT
           echo "spatial_changed=$CHANGED_SPATIAL" >> $GITHUB_OUTPUT
           echo "mobile_changed=$CHANGED_MOBILE" >> $GITHUB_OUTPUT
