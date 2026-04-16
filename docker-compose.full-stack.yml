@@ -94,6 +94,8 @@ services:
       ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:8081,exp://localhost:8081"
     ports: ["8001:8001"]
     networks: [zylvex]
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8001"
 
   spatial-canvas-backend:
     build: ./spatial-canvas/backend
@@ -110,6 +112,8 @@ services:
       ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:8081"
     ports: ["8000:8000"]
     networks: [zylvex]
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
   mind-mapper-backend:
     build: ./mind-mapper/backend-services
@@ -125,6 +129,8 @@ services:
       ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:8081"
     ports: ["8002:8002"]
     networks: [zylvex]
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8002"
 
   social-service:
     build: ./shared/social
@@ -143,6 +149,8 @@ services:
       ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:8081,exp://localhost:8081"
     ports: ["8003:8003"]
     networks: [zylvex]
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8003"
 
   realtime-service:
     build: ./shared/realtime
@@ -180,6 +188,8 @@ services:
       ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:8081,exp://localhost:8081"
     ports: ["8005:8005"]
     networks: [zylvex]
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8005"
 
   web-app:
     build:
