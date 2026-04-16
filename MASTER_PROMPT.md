@@ -20,6 +20,8 @@ Zylvex Technologies is a spatial-social computing platform that overlays digital
 **Shared**
 - Auth service: FastAPI, PostgreSQL 15, JWT (HS256), bcrypt, slowapi, Alembic, port 8001
 - Social graph service: FastAPI, PostgreSQL 15, Alembic, SQLAlchemy, port 8003
+- Realtime gateway: FastAPI + WebSocket + Redis pub/sub, port 8004
+- Notifications service: FastAPI, PostgreSQL 15, Alembic, SQLAlchemy, SendGrid, port 8005
 
 ---
 
@@ -28,7 +30,9 @@ Zylvex Technologies is a spatial-social computing platform that overlays digital
 ```
 shared/auth/                   JWT auth service (register/login/refresh/logout/verify)
 shared/social/                 Social graph service (follow/unfollow, reactions, feeds)
-shared/analytics|billing|notifications/  STUB (empty)
+shared/realtime/               WebSocket gateway (WS /ws/{user_id}, Redis pub/sub, port 8004)
+shared/notifications/          Notifications service (in-app, email, push stub, port 8005)
+shared/analytics|billing/      STUB (empty)
 spatial-canvas/backend/        FastAPI + PostGIS anchor CRUD + radius search
 spatial-canvas/mobile/         React Native AR camera app (Expo, JS)
 spatial-canvas/desktop/        STUB (empty)
@@ -41,7 +45,7 @@ docs/architecture/             ADRs + auth contract (3 files)
 docs/business|development/     STUB (empty)
 tests/                         STUB (empty)
 scripts/                       cleanup-tokens.sh
-docker-compose.full-stack.yml  One-command local stack (3 backends + 3 DBs + web-app)
+docker-compose.full-stack.yml  One-command local stack (5 app services + 5 DBs + Redis + web-app)
 ```
 
 ---
@@ -52,9 +56,11 @@ docker-compose.full-stack.yml  One-command local stack (3 backends + 3 DBs + web
 - **Social graph service**: follow/unfollow (idempotent), paginated followers/following, nearby feed (spatial canvas integration), trending feed (7-day reaction window), emoji reactions (👍❤️🔥💡) with uniqueness per user per content, JWT auth via shared auth service, Alembic migrations, 16 tests, Dockerfile, port 8003
 - **Spatial Canvas backend**: anchor CRUD, PostGIS radius search, auth middleware, Alembic, 9 tests, Dockerfile, CI
 - **Mind Mapper backend**: mind map CRUD, hierarchical node tree (parent_id), BCI session recording (avg_focus, duration, focus_timeline JSON), pagination, ownership checks, rate limiting, 10 tests, Dockerfile, CI
+- **Realtime Gateway**: FastAPI WebSocket service on port 8004. WS endpoint `/ws/{user_id}?token=<jwt>` — JWT auth via auth service. ConnectionManager tracks active connections by user_id. Redis pub/sub fan-out across multiple server instances. Pushes events: `new_follow`, `new_reaction`, `new_nearby_anchor`, `new_collaboration_invite`. Internal HTTP endpoints: POST `/internal/push` (single user) and POST `/internal/broadcast` (multi-user). Heartbeat ping every 30 s. Dockerfile + requirements.
+- **Notifications Service**: FastAPI on port 8005. `POST /notifications/send` (internal), `GET /notifications/me` (paginated), `POST /notifications/mark-read/{id}`, `POST /notifications/mark-all-read`. PostgreSQL table: id, user_id, type, title, body, metadata JSONB, read, created_at. Notification types: follow, reaction, nearby_anchor, collaboration_invite. SendGrid email for follow+reaction with dark HTML templates. Push stub (APNs/FCM TODO in code). Alembic migrations, 10 tests, Dockerfile.
 - **Mind Mapper mobile**: Login/Register/Home/MindMapEditor/SessionStats screens, focus slider BCI simulator, color-coded nodes (green/yellow/red), session stats summary, full API integration
 - **Spatial Canvas mobile**: camera view with crosshair, tap-to-place anchor with GPS, nearby anchors list, auth screens
-- **Web App**: React 18 + Vite + TypeScript + TailwindCSS + Framer Motion at `/web-app/`. Landing page (animated gradient, product cards, waitlist form), auth pages (/login, /register, /forgot-password), dashboard with sidebar, Mind Mapper canvas (**Sprint 2**: full ReactFlow canvas at `/mind-mapper/:mapId` — glassmorphism nodes, animated gradient edges, minimap, FAB drawer, inline edit, drag-to-save, focus overlay, PNG+JSON export, dark/light mode), Spatial Canvas react-leaflet map with anchor pins + detail drawer, social feed skeleton, full typed API client, Dockerfile + nginx, CI in pr-checks.yml
+- **Web App**: React 18 + Vite + TypeScript + TailwindCSS + Framer Motion at `/web-app/`. Landing page (animated gradient, product cards, waitlist form), auth pages (/login, /register, /forgot-password), dashboard with sidebar, Mind Mapper canvas (**Sprint 2**: full ReactFlow canvas at `/mind-mapper/:mapId` — glassmorphism nodes, animated gradient edges, minimap, FAB drawer, inline edit, drag-to-save, focus overlay, PNG+JSON export, dark/light mode), Spatial Canvas react-leaflet map with anchor pins + detail drawer, social feed skeleton, full typed API client, Dockerfile + nginx, CI in pr-checks.yml. **Sprint 3**: NotificationsContext (WebSocket to realtime gateway, toast on events), notification bell icon in AppShell top bar with unread count badge, dropdown showing last 10 notifications with mark-read.
 - **Jupyter Notebooks**: Three analytics notebooks at `/docs/notebooks/` — mind map 3D visualization (NetworkX + Plotly), BCI focus analysis (time-series, peaks, heatmap, 3D surface), Spatial Canvas analytics (Folium map, heatmap, bar/time-series, 3D scatter). All zero-dependency, fully executable, with ipywidgets Sandbox sections.
 - **CI/CD**: 6 GitHub Actions workflows + web-app CI in pr-checks.yml, Codecov integration, staging SSH deploy
 - **Docker Compose full-stack**: 4 app services + 4 DBs with healthchecks, shared network
@@ -64,7 +70,7 @@ docker-compose.full-stack.yml  One-command local stack (3 backends + 3 DBs + web
 ## 5. Stubs / Empty Paths
 
 ```
-shared/analytics|billing|notifications/
+shared/analytics|billing/
 spatial-canvas/desktop/
 mind-mapper/desktop-studio|ml-models/
 infrastructure/kubernetes|terraform|monitoring/
@@ -76,7 +82,7 @@ tests/
 
 ## 6. Core Architectural Rules
 
-- **Auth pattern**: Single shared auth service at :8001. Downstream services (SC :8000, MM :8002, Social :8003) NEVER verify JWTs locally. Every authenticated request calls `GET /auth/verify` → `{id, sub, email, full_name, is_active}`.
+- **Auth pattern**: Single shared auth service at :8001. Downstream services (SC :8000, MM :8002, Social :8003, Realtime :8004, Notifications :8005) NEVER verify JWTs locally. Every authenticated request calls `GET /auth/verify` → `{id, sub, email, full_name, is_active}`.
 - **API endpoints**: POST /auth/register, /auth/login, /auth/refresh, /auth/logout · GET /auth/verify, /auth/me
 - **Social endpoints**: POST /social/follow/{user_id}, DELETE /social/follow/{user_id}, GET /social/followers/{user_id}, GET /social/following/{user_id}, GET /social/feed/nearby?lat=&lng=&radius_km=, GET /social/feed/trending, POST /social/react, DELETE /social/react/{reaction_id}, GET /social/reactions/{content_type}/{content_id}
 - **PostGIS**: `Geometry('POINT', srid=4326)` on `Anchor.location`; radius queries use `radius_km / 111.0` degrees
@@ -84,7 +90,7 @@ tests/
 - **JWT**: access token 15 min, refresh token 30 days — stored hashed in DB, rotated on refresh, revocable via logout
 - **CORS**: all services restrict via `ALLOWED_ORIGINS` env var (comma-separated)
 - **Migrations**: Alembic in all 3 backends; auto-runs on container start
-- **Run**: Auth `uvicorn app.main:app --port 8001` · SC `:8000` · MM `:8002` · Social `:8003` · Mobile `expo start`
+- **Run**: Auth `uvicorn app.main:app --port 8001` · SC `:8000` · MM `:8002` · Social `:8003` · Realtime `:8004` · Notifications `:8005` · Mobile `expo start`
 
 ---
 
@@ -94,10 +100,13 @@ tests/
 |------|--------------|
 | `shared/auth/.env.example` | `DATABASE_URL`, `JWT_SECRET`, `JWT_ALGORITHM=HS256`, `ACCESS_TOKEN_EXPIRE_MINUTES=15`, `REFRESH_TOKEN_EXPIRE_DAYS=30`, `BCRYPT_ROUNDS=12`, `ALLOWED_ORIGINS` |
 | `shared/social/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `SPATIAL_CANVAS_URL`, `ALLOWED_ORIGINS` |
+| `shared/realtime/.env.example` | `AUTH_SERVICE_URL`, `REDIS_URL`, `ALLOWED_ORIGINS`, `HEARTBEAT_INTERVAL=30` |
+| `shared/notifications/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `REALTIME_SERVICE_URL`, `SENDGRID_API_KEY`, `EMAIL_FROM`, `ALLOWED_ORIGINS` |
 | `spatial-canvas/backend/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `ALLOWED_ORIGINS` |
 | `mind-mapper/backend-services/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `JWT_SECRET`, `PORT=8002` |
 | `mind-mapper/mobile-bci/.env.example` | `EXPO_PUBLIC_API_URL=http://localhost:8002`, `EXPO_PUBLIC_AUTH_URL=http://localhost:8001` |
 | `spatial-canvas/mobile/.env.example` | `EXPO_PUBLIC_API_URL=http://localhost:8000`, `EXPO_PUBLIC_AUTH_URL=http://localhost:8001` |
+| `web-app/.env.example` | `VITE_AUTH_API_URL`, `VITE_SPATIAL_API_URL`, `VITE_MIND_MAPPER_API_URL`, `VITE_NOTIFICATIONS_API_URL=http://localhost:8005`, `VITE_REALTIME_WS_URL=ws://localhost:8004` |
 
 **Critical**: Auth service uses `JWT_SECRET` (not `JWT_SECRET_KEY`).
 
@@ -140,14 +149,14 @@ Commit format: Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `refacto
 4. Migrate PostGIS `Geometry` → `Geography` (Alembic migration)
 5. ~~Social graph service: follow/unfollow, follower/following lists~~ **✅ DONE** — `/shared/social/` port 8003: full follow graph, emoji reactions, nearby+trending feeds, 16 tests, Dockerfile, docker-compose entry.
 6. Anchor media uploads: S3/GCS signed URLs for image/video/audio
-7. WebSocket layer: anchor proximity alerts, live mind map co-editing
+7. ~~WebSocket layer: anchor proximity alerts, live mind map co-editing~~ **✅ DONE — Sprint 3 (Part A)** — `/shared/realtime/` FastAPI WebSocket gateway on port 8004. WS endpoint `/ws/{user_id}?token=<jwt>` with JWT auth via auth service. ConnectionManager tracks connections by user_id. Redis pub/sub fan-out across multiple instances. Events: `new_follow`, `new_reaction`, `new_nearby_anchor`, `new_collaboration_invite`. Internal HTTP: POST `/internal/push` + POST `/internal/broadcast`. Heartbeat ping every 30 s, reconnect guidance in code. Dockerfile + requirements.
 8. ~~Web frontend for Mind Mapper (React + React Flow canvas)~~ **✅ DONE — Sprint 1** — Web app at `/web-app/` (React 18 + Vite + TypeScript + TailwindCSS + Framer Motion). Landing page, auth pages, dashboard, Mind Mapper canvas stub, Spatial Canvas react-leaflet map with anchor pins, social feed skeleton, full typed API client, Docker + nginx, CI integrated.
    **✅ DONE — Sprint 2 (Part A)** — Full interactive ReactFlow mind map canvas at `/web-app/src/pages/MindMap.tsx` (route `/mind-mapper/:mapId`): glassmorphism nodes with focus score badge + color ring (green/yellow/red), animated gradient bezier edges, zoom/pan/MiniMap, FAB + slide-in drawer for adding nodes (title + parent selector), double-click inline edit, drag-to-reposition (PUT API), focus overlay mode (node size by focus_level), PNG export (html-to-image) + JSON export, dark/light mode.
    **✅ DONE — Sprint 2 (Part B)** — Three Jupyter notebooks at `/docs/notebooks/`: `mind_map_3d_visualization.ipynb` (3D Plotly + NetworkX spring layout, hover tooltips, export HTML), `bci_focus_analysis.ipynb` (time-series, rolling avg, peak detection, heatmap, 3D surface), `spatial_canvas_analytics.ipynb` (Folium cluster map, reaction heatmap, bar/time-series charts, 3D scatter). Each has pip install block, hardcoded sample data, and ipywidgets Sandbox section. `/docs/notebooks/README.md` + `requirements.txt` included.
 9. Kubernetes manifests + Helm charts
 10. Terraform IaC (AWS/GCP)
 11. Monitoring: Prometheus + Grafana + alerting
-12. Notifications service (push, email, in-app)
+12. ~~Notifications service (push, email, in-app)~~ **✅ DONE — Sprint 3 (Part B+C)** — `/shared/notifications/` FastAPI service on port 8005. `POST /notifications/send` (internal), `GET /notifications/me` (paginated), `POST /notifications/mark-read/{id}`, `POST /notifications/mark-all-read`. PostgreSQL table: id, user_id, type, title, body, metadata JSONB, read, created_at. Types: follow, reaction, nearby_anchor, collaboration_invite. SendGrid HTML email for follow+reaction (dark-themed, Zylvex branded). Push notification stub (APNs/FCM TODO). Alembic migrations, 10 tests, Dockerfile. Web app: NotificationsContext (WebSocket + toast on events), bell icon in AppShell top bar with unread badge, dropdown last 10 notifications, mark-read. Docker Compose: added Redis + realtime-service + notifications-service + postgres-notifications.
 13. Analytics service (event pipeline, funnels, retention)
 14. Billing service (Stripe, Free/Pro/Team tiers)
 15. Real BCI hardware adapter (Neurosity/OpenBCI/Muse)

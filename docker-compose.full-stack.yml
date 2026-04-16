@@ -43,6 +43,45 @@ services:
       retries: 5
     networks: [zylvex]
 
+  postgres-social:
+    image: postgres:15-alpine
+    container_name: zylvex-social-db
+    environment:
+      POSTGRES_USER: social_user
+      POSTGRES_PASSWORD: social_pass
+      POSTGRES_DB: social_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U social_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [zylvex]
+
+  postgres-notifications:
+    image: postgres:15-alpine
+    container_name: zylvex-notifications-db
+    environment:
+      POSTGRES_USER: notif_user
+      POSTGRES_PASSWORD: notif_pass
+      POSTGRES_DB: notifications_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notif_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [zylvex]
+
+  redis:
+    image: redis:7-alpine
+    container_name: zylvex-redis
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [zylvex]
+
   auth-service:
     build: ./shared/auth
     container_name: zylvex-auth
@@ -87,20 +126,6 @@ services:
     ports: ["8002:8002"]
     networks: [zylvex]
 
-  postgres-social:
-    image: postgres:15-alpine
-    container_name: zylvex-social-db
-    environment:
-      POSTGRES_USER: social_user
-      POSTGRES_PASSWORD: social_pass
-      POSTGRES_DB: social_db
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U social_user"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks: [zylvex]
-
   social-service:
     build: ./shared/social
     container_name: zylvex-social
@@ -119,6 +144,43 @@ services:
     ports: ["8003:8003"]
     networks: [zylvex]
 
+  realtime-service:
+    build: ./shared/realtime
+    container_name: zylvex-realtime
+    depends_on:
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:8001
+      REDIS_URL: redis://redis:6379
+      ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:8081,exp://localhost:8081"
+      HEARTBEAT_INTERVAL: 30
+    ports: ["8004:8004"]
+    networks: [zylvex]
+
+  notifications-service:
+    build: ./shared/notifications
+    container_name: zylvex-notifications
+    depends_on:
+      postgres-notifications:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      realtime-service:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://notif_user:notif_pass@postgres-notifications:5432/notifications_db
+      AUTH_SERVICE_URL: http://auth-service:8001
+      REALTIME_SERVICE_URL: http://realtime-service:8004
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@zylvex.io}
+      EMAIL_FROM_NAME: Zylvex
+      ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:8081,exp://localhost:8081"
+    ports: ["8005:8005"]
+    networks: [zylvex]
+
   web-app:
     build:
       context: ./web-app
@@ -126,14 +188,19 @@ services:
         VITE_AUTH_API_URL: http://localhost:8001
         VITE_SPATIAL_API_URL: http://localhost:8000
         VITE_MIND_MAPPER_API_URL: http://localhost:8002
+        VITE_NOTIFICATIONS_API_URL: http://localhost:8005
+        VITE_REALTIME_WS_URL: ws://localhost:8004
     container_name: zylvex-web
     depends_on:
       - auth-service
       - spatial-canvas-backend
       - mind-mapper-backend
+      - notifications-service
+      - realtime-service
     ports: ["3000:80"]
     networks: [zylvex]
 
 networks:
   zylvex:
     name: zylvex-network
+
