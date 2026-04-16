@@ -34,7 +34,7 @@ async def get_current_user(
         # Call auth service to validate token
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{AUTH_SERVICE_URL}/auth/me",
+                f"{AUTH_SERVICE_URL}/auth/verify",
                 headers={"Authorization": f"Bearer {token}"},
                 timeout=10.0,
             )

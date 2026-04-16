@@ -30,22 +30,19 @@ def upgrade() -> None:
             server_default=sa.text("gen_random_uuid()"),
             primary_key=True,
         ),
-        sa.Column("user_id", sa.String(255), nullable=False, index=True),
+        sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=False, index=True),
+        sa.Column("title", sa.String(255), nullable=False),
+        sa.Column("content", sa.Text, nullable=True),
         sa.Column("content_type", sa.String(50), nullable=False),
-        sa.Column("content_data", sa.Text, nullable=False),
-        sa.Column("title", sa.String(255)),
-        sa.Column("description", sa.Text),
         sa.Column("latitude", sa.Float, nullable=False),
         sa.Column("longitude", sa.Float, nullable=False),
-        sa.Column("altitude", sa.Float, default=0.0),
         sa.Column(
-            "location", Geometry(geometry_type="POINTZ", srid=4326), nullable=False
+            "location", Geometry(geometry_type="POINT", srid=4326), nullable=False
         ),
         sa.Column(
             "created_at", sa.DateTime(timezone=True), server_default=sa.func.now()
         ),
         sa.Column("updated_at", sa.DateTime(timezone=True), onupdate=sa.func.now()),
-        sa.Column("is_active", sa.String(1), default="Y", nullable=False),
     )
 
     # Create spatial index

@@ -74,9 +74,9 @@ async def follow_user(
         from fastapi.encoders import jsonable_encoder
 
         # Idempotent: return existing record with 200
-        raise HTTPException(
+        return JSONResponse(
             status_code=status.HTTP_200_OK,
-            detail=jsonable_encoder(FollowResponse.model_validate(existing)),
+            content=jsonable_encoder(FollowResponse.model_validate(existing)),
         )
 
     follow = Follow(follower_id=follower_id, following_id=user_id)

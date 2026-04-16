@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { UserResponse, LoginResponse } from './types';
+import type { UserResponse, LoginResponse, VerifyTokenResponse } from './types';
 
 export function register(email: string, fullName: string, password: string): Promise<UserResponse> {
   return apiClient.post<UserResponse>('auth', '/auth/register', {
@@ -25,6 +25,6 @@ export function getMe(): Promise<UserResponse> {
   return apiClient.get<UserResponse>('auth', '/auth/me');
 }
 
-export function verifyToken(): Promise<{ valid: boolean }> {
-  return apiClient.get<{ valid: boolean }>('auth', '/auth/verify');
+export function verifyToken(): Promise<VerifyTokenResponse> {
+  return apiClient.get<VerifyTokenResponse>('auth', '/auth/verify');
 }

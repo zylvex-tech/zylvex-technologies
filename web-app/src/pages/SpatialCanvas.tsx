@@ -41,7 +41,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-const CONTENT_TYPES = ['text', 'image', 'video', 'audio', 'link'];
+const CONTENT_TYPES = ['text', 'image', 'video', 'audio'];
 
 export default function SpatialCanvas() {
   const geo = useGeolocation();

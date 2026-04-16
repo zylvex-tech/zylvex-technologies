@@ -8,6 +8,14 @@ export interface UserResponse {
   updated_at: string;
 }
 
+export interface VerifyTokenResponse {
+  id: string;
+  sub: string;
+  email: string;
+  full_name: string;
+  is_active: boolean;
+}
+
 export interface LoginResponse {
   access_token: string;
   refresh_token: string;
