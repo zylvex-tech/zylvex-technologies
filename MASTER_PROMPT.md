@@ -19,6 +19,7 @@ Zylvex Technologies is a spatial-social computing platform that overlays digital
 
 **Shared**
 - Auth service: FastAPI, PostgreSQL 15, JWT (HS256), bcrypt, slowapi, Alembic, port 8001
+- Social graph service: FastAPI, PostgreSQL 15, Alembic, SQLAlchemy, port 8003
 
 ---
 
@@ -26,6 +27,7 @@ Zylvex Technologies is a spatial-social computing platform that overlays digital
 
 ```
 shared/auth/                   JWT auth service (register/login/refresh/logout/verify)
+shared/social/                 Social graph service (follow/unfollow, reactions, feeds)
 shared/analytics|billing|notifications/  STUB (empty)
 spatial-canvas/backend/        FastAPI + PostGIS anchor CRUD + radius search
 spatial-canvas/mobile/         React Native AR camera app (Expo, JS)
@@ -47,13 +49,14 @@ docker-compose.full-stack.yml  One-command local stack (3 backends + 3 DBs + web
 ## 4. Complete & Production-Ready
 
 - **Auth service**: register, login, logout, refresh token rotation, revocation, /auth/verify (used by all downstream), /auth/me, rate limiting (5/min register, 10/min login), Alembic migrations, 15 tests, Dockerfile, CI
+- **Social graph service**: follow/unfollow (idempotent), paginated followers/following, nearby feed (spatial canvas integration), trending feed (7-day reaction window), emoji reactions (👍❤️🔥💡) with uniqueness per user per content, JWT auth via shared auth service, Alembic migrations, 16 tests, Dockerfile, port 8003
 - **Spatial Canvas backend**: anchor CRUD, PostGIS radius search, auth middleware, Alembic, 9 tests, Dockerfile, CI
 - **Mind Mapper backend**: mind map CRUD, hierarchical node tree (parent_id), BCI session recording (avg_focus, duration, focus_timeline JSON), pagination, ownership checks, rate limiting, 10 tests, Dockerfile, CI
 - **Mind Mapper mobile**: Login/Register/Home/MindMapEditor/SessionStats screens, focus slider BCI simulator, color-coded nodes (green/yellow/red), session stats summary, full API integration
 - **Spatial Canvas mobile**: camera view with crosshair, tap-to-place anchor with GPS, nearby anchors list, auth screens
 - **Web App**: React 18 + Vite + TypeScript + TailwindCSS + Framer Motion at `/web-app/`. Landing page (animated gradient, product cards, waitlist form), auth pages (/login, /register, /forgot-password), dashboard with sidebar, Mind Mapper canvas stub, Spatial Canvas react-leaflet map with anchor pins + detail drawer, social feed skeleton, full typed API client, Dockerfile + nginx, CI in pr-checks.yml
 - **CI/CD**: 6 GitHub Actions workflows + web-app CI in pr-checks.yml, Codecov integration, staging SSH deploy
-- **Docker Compose full-stack**: 3 app services + 3 DBs with healthchecks, shared network
+- **Docker Compose full-stack**: 4 app services + 4 DBs with healthchecks, shared network
 
 ---
 
@@ -72,14 +75,15 @@ tests/
 
 ## 6. Core Architectural Rules
 
-- **Auth pattern**: Single shared auth service at :8001. Downstream services (SC :8000, MM :8002) NEVER verify JWTs locally. Every authenticated request calls `GET /auth/verify` → `{id, sub, email, full_name, is_active}`.
-- **Auth endpoints**: POST /auth/register, /auth/login, /auth/refresh, /auth/logout · GET /auth/verify, /auth/me
+- **Auth pattern**: Single shared auth service at :8001. Downstream services (SC :8000, MM :8002, Social :8003) NEVER verify JWTs locally. Every authenticated request calls `GET /auth/verify` → `{id, sub, email, full_name, is_active}`.
+- **API endpoints**: POST /auth/register, /auth/login, /auth/refresh, /auth/logout · GET /auth/verify, /auth/me
+- **Social endpoints**: POST /social/follow/{user_id}, DELETE /social/follow/{user_id}, GET /social/followers/{user_id}, GET /social/following/{user_id}, GET /social/feed/nearby?lat=&lng=&radius_km=, GET /social/feed/trending, POST /social/react, DELETE /social/react/{reaction_id}, GET /social/reactions/{content_type}/{content_id}
 - **PostGIS**: `Geometry('POINT', srid=4326)` on `Anchor.location`; radius queries use `radius_km / 111.0` degrees
 - **Mobile config**: Both apps read `EXPO_PUBLIC_API_URL` and `EXPO_PUBLIC_AUTH_URL` from `src/config.ts` (MM) / `src/config.js` (SC)
 - **JWT**: access token 15 min, refresh token 30 days — stored hashed in DB, rotated on refresh, revocable via logout
 - **CORS**: all services restrict via `ALLOWED_ORIGINS` env var (comma-separated)
 - **Migrations**: Alembic in all 3 backends; auto-runs on container start
-- **Run**: Auth `uvicorn app.main:app --port 8001` · SC `:8000` · MM `:8002` · Mobile `expo start`
+- **Run**: Auth `uvicorn app.main:app --port 8001` · SC `:8000` · MM `:8002` · Social `:8003` · Mobile `expo start`
 
 ---
 
@@ -88,6 +92,7 @@ tests/
 | File | Key Variables |
 |------|--------------|
 | `shared/auth/.env.example` | `DATABASE_URL`, `JWT_SECRET`, `JWT_ALGORITHM=HS256`, `ACCESS_TOKEN_EXPIRE_MINUTES=15`, `REFRESH_TOKEN_EXPIRE_DAYS=30`, `BCRYPT_ROUNDS=12`, `ALLOWED_ORIGINS` |
+| `shared/social/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `SPATIAL_CANVAS_URL`, `ALLOWED_ORIGINS` |
 | `spatial-canvas/backend/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `ALLOWED_ORIGINS` |
 | `mind-mapper/backend-services/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `JWT_SECRET`, `PORT=8002` |
 | `mind-mapper/mobile-bci/.env.example` | `EXPO_PUBLIC_API_URL=http://localhost:8002`, `EXPO_PUBLIC_AUTH_URL=http://localhost:8001` |
@@ -121,7 +126,7 @@ Commit format: Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `refacto
 4. **No password reset**: No forgot-password or reset-password endpoints.
 5. **Mind map editor is a list, not a canvas**: Node `x`/`y` stored in DB but mobile renders a flat `ScrollView` — no graph layout engine.
 6. ~~No web frontend~~: **✅ Fixed** — `/web-app/` React 18 + Vite app covers both products (Sprint 1).
-7. **No social features**: No follow graph, feeds, sharing, reactions, or discovery.
+7. ~~**No social features**~~: **✅ Fixed** — `/shared/social/` FastAPI microservice on port 8003. Follow/unfollow (idempotent), paginated followers/following lists, emoji reactions (👍❤️🔥💡, unique per user/content), nearby feed (integrates with Spatial Canvas), trending feed (7-day window), JWT auth via shared auth service, Alembic migrations, 16 tests, Dockerfile.
 8. **Media uploads incomplete**: Anchor model supports `image|video|audio` content types but only `text` works; no file storage.
 
 ---
@@ -132,7 +137,7 @@ Commit format: Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `refacto
 2. Password reset (`POST /auth/forgot-password`, `POST /auth/reset-password`)
 3. Redis cache for auth token verification (TTL = access token lifetime)
 4. Migrate PostGIS `Geometry` → `Geography` (Alembic migration)
-5. Social graph service: follow/unfollow, follower/following lists
+5. ~~Social graph service: follow/unfollow, follower/following lists~~ **✅ DONE** — `/shared/social/` port 8003: full follow graph, emoji reactions, nearby+trending feeds, 16 tests, Dockerfile, docker-compose entry.
 6. Anchor media uploads: S3/GCS signed URLs for image/video/audio
 7. WebSocket layer: anchor proximity alerts, live mind map co-editing
 8. ~~Web frontend for Mind Mapper (React + React Flow canvas)~~ **✅ DONE — Sprint 1** — Web app at `/web-app/` (React 18 + Vite + TypeScript + TailwindCSS + Framer Motion). Landing page, auth pages, dashboard, Mind Mapper canvas stub, Spatial Canvas react-leaflet map with anchor pins, social feed skeleton, full typed API client, Docker + nginx, CI integrated.
