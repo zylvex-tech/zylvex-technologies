@@ -263,13 +263,13 @@ function MindMapCanvas({ mapId }: CanvasProps) {
     listNodes(mapId)
       .then((backendNodes) => {
         setRawNodes(backendNodes);
-        buildFlow(backendNodes, focusOverlay);
+        buildFlow(backendNodes, false);
       })
       .catch((err) => {
         showToast(err instanceof ApiError ? err.message : 'Failed to load nodes', 'error');
       })
       .finally(() => setIsLoading(false));
-  }, [mapId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mapId, buildFlow, showToast]);
 
   // Re-apply focusOverlay changes to existing nodes
   useEffect(() => {
@@ -636,10 +636,11 @@ export default function MindMap() {
   const { mapId } = useParams<{ mapId: string }>();
   const navigate = useNavigate();
 
-  if (!mapId) {
-    navigate('/mind-mapper');
-    return null;
-  }
+  useEffect(() => {
+    if (!mapId) navigate('/mind-mapper');
+  }, [mapId, navigate]);
+
+  if (!mapId) return null;
 
   return (
     <>
