@@ -9,6 +9,7 @@ const Register = lazy(() => import('./pages/Register'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const MindMapper = lazy(() => import('./pages/MindMapper'));
+const MindMap = lazy(() => import('./pages/MindMap'));
 const SpatialCanvas = lazy(() => import('./pages/SpatialCanvas'));
 const Feed = lazy(() => import('./pages/Feed'));
 
@@ -60,6 +61,7 @@ export default function Router() {
             <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/mind-mapper" element={<ProtectedRoute><MindMapper /></ProtectedRoute>} />
+            <Route path="/mind-mapper/:mapId" element={<ProtectedRoute><MindMap /></ProtectedRoute>} />
             <Route path="/spatial-canvas" element={<ProtectedRoute><SpatialCanvas /></ProtectedRoute>} />
             <Route path="/feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
