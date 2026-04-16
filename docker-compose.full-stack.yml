@@ -200,6 +200,12 @@ services:
     ports: ["3000:80"]
     networks: [zylvex]
 
+  docs-site:
+    build: ./docs-site
+    container_name: zylvex-docs
+    ports: ["3001:3001"]
+    networks: [zylvex]
+
 networks:
   zylvex:
     name: zylvex-network
