@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     LOG_LEVEL: str = "INFO"
 
+    # Media storage
+    MEDIA_STORAGE_PATH: str = "./media"
+
     class Config:
         env_file = ".env"
         case_sensitive = True

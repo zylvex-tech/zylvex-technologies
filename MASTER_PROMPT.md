@@ -56,9 +56,9 @@ SECURITY.md                    Responsible disclosure policy (security@zylvex.co
 
 ## 4. Complete & Production-Ready
 
-- **Auth service**: register, login, logout, refresh token rotation, revocation, /auth/verify (used by all downstream), /auth/me, rate limiting (5/min register, 10/min login), Alembic migrations, 15 tests, Dockerfile, CI
+- **Auth service**: register (with email verification token), login (requires verified email), logout, refresh token rotation, revocation, /auth/verify (used by all downstream), /auth/me, email verification (GET /auth/verify-email), password reset (POST /auth/forgot-password + POST /auth/reset-password with session invalidation), rate limiting (5/min register, 10/min login), SendGrid email with dark-themed HTML templates (dev fallback to console), Alembic migrations (users, refresh_tokens, email_verifications, password_resets), 28 tests, Dockerfile, CI
 - **Social graph service**: follow/unfollow (idempotent), paginated followers/following, nearby feed (spatial canvas integration), trending feed (7-day reaction window), emoji reactions (👍❤️🔥💡) with uniqueness per user per content, JWT auth via shared auth service, Alembic migrations, 16 tests, Dockerfile, port 8003
-- **Spatial Canvas backend**: anchor CRUD, PostGIS radius search, auth middleware, Alembic, 9 tests, Dockerfile, CI
+- **Spatial Canvas backend**: anchor CRUD, PostGIS Geography radius search (meter-accurate at all latitudes, ADR-002 resolved), media upload (POST /api/v1/anchors/{id}/media — image ≤10MB, video ≤100MB, audio ≤25MB), static media serving (/media/), auth middleware, Alembic, 16 tests, Dockerfile, CI
 - **Mind Mapper backend**: mind map CRUD, hierarchical node tree (parent_id), BCI session recording (avg_focus, duration, focus_timeline JSON), pagination, ownership checks, rate limiting, 10 tests, Dockerfile, CI
 - **Realtime Gateway**: FastAPI WebSocket service on port 8004. WS endpoint `/ws/{user_id}?token=<jwt>` — JWT auth via auth service. ConnectionManager tracks active connections by user_id. Redis pub/sub fan-out across multiple server instances. Pushes events: `new_follow`, `new_reaction`, `new_nearby_anchor`, `new_collaboration_invite`. Internal HTTP endpoints: POST `/internal/push` (single user) and POST `/internal/broadcast` (multi-user). Heartbeat ping every 30 s. Dockerfile + requirements.
 - **Notifications Service**: FastAPI on port 8005. `POST /notifications/send` (internal), `GET /notifications/me` (paginated), `POST /notifications/mark-read/{id}`, `POST /notifications/mark-all-read`. PostgreSQL table: id, user_id, type, title, body, metadata JSONB, read, created_at. Notification types: follow, reaction, nearby_anchor, collaboration_invite. SendGrid email for follow+reaction with dark HTML templates. Push stub (APNs/FCM TODO in code). Alembic migrations, 10 tests, Dockerfile.
@@ -91,9 +91,9 @@ tests/
 ## 6. Core Architectural Rules
 
 - **Auth pattern**: Single shared auth service at :8001. Downstream services (SC :8000, MM :8002, Social :8003, Realtime :8004, Notifications :8005) NEVER verify JWTs locally. Every authenticated request calls `GET /auth/verify` → `{id, sub, email, full_name, is_active}`.
-- **API endpoints**: POST /auth/register, /auth/login, /auth/refresh, /auth/logout · GET /auth/verify, /auth/me
+- **API endpoints**: POST /auth/register, /auth/login, /auth/refresh, /auth/logout, /auth/forgot-password, /auth/reset-password · GET /auth/verify, /auth/me, /auth/verify-email?token=
 - **Social endpoints**: POST /social/follow/{user_id}, DELETE /social/follow/{user_id}, GET /social/followers/{user_id}, GET /social/following/{user_id}, GET /social/feed/nearby?lat=&lng=&radius_km=, GET /social/feed/trending, POST /social/react, DELETE /social/react/{reaction_id}, GET /social/reactions/{content_type}/{content_id}
-- **PostGIS**: `Geometry('POINT', srid=4326)` on `Anchor.location`; radius queries use `radius_km / 111.0` degrees
+- **PostGIS**: `Geography('POINT', srid=4326)` on `Anchor.location`; radius queries use `radius_km * 1000` meters with `ST_DWithin` (accurate at all latitudes)
 - **Mobile config**: Both apps read `EXPO_PUBLIC_API_URL` and `EXPO_PUBLIC_AUTH_URL` from `src/config.ts` (MM) / `src/config.js` (SC)
 - **JWT**: access token 15 min, refresh token 30 days — stored hashed in DB, rotated on refresh, revocable via logout
 - **CORS**: all services restrict via `ALLOWED_ORIGINS` env var (comma-separated)
@@ -106,11 +106,11 @@ tests/
 
 | File | Key Variables |
 |------|--------------|
-| `shared/auth/.env.example` | `DATABASE_URL`, `JWT_SECRET`, `JWT_ALGORITHM=HS256`, `ACCESS_TOKEN_EXPIRE_MINUTES=15`, `REFRESH_TOKEN_EXPIRE_DAYS=30`, `BCRYPT_ROUNDS=12`, `ALLOWED_ORIGINS` |
+| `shared/auth/.env.example` | `DATABASE_URL`, `JWT_SECRET`, `JWT_ALGORITHM=HS256`, `ACCESS_TOKEN_EXPIRE_MINUTES=15`, `REFRESH_TOKEN_EXPIRE_DAYS=30`, `BCRYPT_ROUNDS=12`, `ALLOWED_ORIGINS`, `SENDGRID_API_KEY` (optional, dev fallback logs to console), `EMAIL_FROM`, `FRONTEND_URL` |
 | `shared/social/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `SPATIAL_CANVAS_URL`, `ALLOWED_ORIGINS` |
 | `shared/realtime/.env.example` | `AUTH_SERVICE_URL`, `REDIS_URL`, `ALLOWED_ORIGINS`, `HEARTBEAT_INTERVAL=30` |
 | `shared/notifications/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `REALTIME_SERVICE_URL`, `SENDGRID_API_KEY`, `EMAIL_FROM`, `ALLOWED_ORIGINS` |
-| `spatial-canvas/backend/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `ALLOWED_ORIGINS` |
+| `spatial-canvas/backend/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `ALLOWED_ORIGINS`, `MEDIA_STORAGE_PATH` (default: ./media) |
 | `mind-mapper/backend-services/.env.example` | `DATABASE_URL`, `AUTH_SERVICE_URL`, `JWT_SECRET`, `PORT=8002` |
 | `mind-mapper/mobile-bci/.env.example` | `EXPO_PUBLIC_API_URL=http://localhost:8002`, `EXPO_PUBLIC_AUTH_URL=http://localhost:8001` |
 | `spatial-canvas/mobile/.env.example` | `EXPO_PUBLIC_API_URL=http://localhost:8000`, `EXPO_PUBLIC_AUTH_URL=http://localhost:8001` |
@@ -139,25 +139,25 @@ Commit format: Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `refacto
 
 ## 9. Known Issues
 
-1. **PostGIS Geometry not Geography** (`ADR-002`): `Anchor.location` uses `Geometry`; degree-based radius approximation is ~50% wrong at 60°N. Fix: migrate to `Geography`, use `ST_DWithin` with meters.
+1. ~~**PostGIS Geometry not Geography** (`ADR-002`)~~: **✅ Fixed** — `Anchor.location` migrated from `Geometry` to `Geography(Point, 4326)`. `ST_DWithin` now uses meters (radius_km × 1000), accurate at all latitudes. Alembic migration 003 handles Geometry → Geography data migration.
 2. **No auth token caching** (`ADR-001`): Every request hits auth service → PostgreSQL. No Redis/TTL cache; auth service is a single point of failure.
-3. **No email verification**: `User.is_verified` exists in DB but is never set; no verification email sent on register.
-4. **No password reset**: No forgot-password or reset-password endpoints.
+3. ~~**No email verification**~~: **✅ Fixed** — `POST /auth/register` generates a 32-byte URL-safe token, stores in `email_verifications` table, sends verification email via SendGrid (dark-themed HTML, dev mode logs to console). `GET /auth/verify-email?token=` validates + marks user verified. Login returns 403 if unverified.
+4. ~~**No password reset**~~: **✅ Fixed** — `POST /auth/forgot-password` (user enumeration safe, always 200), `POST /auth/reset-password` (validates token, hashes new password, invalidates all refresh tokens). Reset tokens expire in 1 hour, stored in `password_resets` table.
 5. ~~**Mind map editor is a list, not a canvas**~~: **✅ Fixed — Sprint 2** — Full ReactFlow canvas at `/mind-mapper/:mapId` with glassmorphism nodes, drag/drop, inline edit, focus overlay, export.
 6. ~~No web frontend~~: **✅ Fixed** — `/web-app/` React 18 + Vite app covers both products (Sprint 1).
 7. ~~**No social features**~~: **✅ Fixed** — `/shared/social/` FastAPI microservice on port 8003. Follow/unfollow (idempotent), paginated followers/following lists, emoji reactions (👍❤️🔥💡, unique per user/content), nearby feed (integrates with Spatial Canvas), trending feed (7-day window), JWT auth via shared auth service, Alembic migrations, 16 tests, Dockerfile.
-8. **Media uploads incomplete**: Anchor model supports `image|video|audio` content types but only `text` works; no file storage.
+8. ~~**Media uploads incomplete**~~: **✅ Fixed** — `POST /api/v1/anchors/{id}/media` accepts multipart upload, validates MIME type vs anchor content_type, enforces size limits (image ≤10MB, video ≤100MB, audio ≤25MB), stores to local disk (TODO: S3/GCS), updates `anchor.media_url`. Static serving at `/media/`. Docker volume for persistence. `GET /api/v1/anchors/{id}/media` returns media URL + content_type.
 
 ---
 
 ## 10. Sprint Backlog (Priority Order)
 
-1. Email verification (`POST /auth/verify-email`, send token on register)
-2. Password reset (`POST /auth/forgot-password`, `POST /auth/reset-password`)
+1. ~~Email verification (`POST /auth/verify-email`, send token on register)~~ **✅ DONE** — Email verification flow with 32-byte token, SendGrid + dev fallback, dark-themed HTML templates, 24h expiry. Login requires verified email (403). Alembic migration 002.
+2. ~~Password reset (`POST /auth/forgot-password`, `POST /auth/reset-password`)~~ **✅ DONE** — User-enumeration-safe forgot-password (always 200), reset with session invalidation (all refresh tokens revoked). 1h token expiry. Alembic migration 003. 13 new auth tests (28 total).
 3. Redis cache for auth token verification (TTL = access token lifetime)
-4. Migrate PostGIS `Geometry` → `Geography` (Alembic migration)
+4. ~~Migrate PostGIS `Geometry` → `Geography` (Alembic migration)~~ **✅ DONE** — Geography type with meter-based ST_DWithin, Alembic migration 003 (data migration + spatial index rebuild). ADR-002 resolved.
 5. ~~Social graph service: follow/unfollow, follower/following lists~~ **✅ DONE** — `/shared/social/` port 8003: full follow graph, emoji reactions, nearby+trending feeds, 16 tests, Dockerfile, docker-compose entry.
-6. Anchor media uploads: S3/GCS signed URLs for image/video/audio
+6. ~~Anchor media uploads: S3/GCS signed URLs for image/video/audio~~ **✅ DONE** — POST /api/v1/anchors/{id}/media with multipart upload, MIME validation, size limits, local disk storage (TODO: S3/GCS), static serving at /media/, Docker volume, 7 new tests (16 total).
 7. ~~WebSocket layer: anchor proximity alerts, live mind map co-editing~~ **✅ DONE — Sprint 3 (Part A)** — `/shared/realtime/` FastAPI WebSocket gateway on port 8004. WS endpoint `/ws/{user_id}?token=<jwt>` with JWT auth via auth service. ConnectionManager tracks connections by user_id. Redis pub/sub fan-out across multiple instances. Events: `new_follow`, `new_reaction`, `new_nearby_anchor`, `new_collaboration_invite`. Internal HTTP: POST `/internal/push` + POST `/internal/broadcast`. Heartbeat ping every 30 s, reconnect guidance in code. Dockerfile + requirements.
 8. ~~Web frontend for Mind Mapper (React + React Flow canvas)~~ **✅ DONE — Sprint 1** — Web app at `/web-app/` (React 18 + Vite + TypeScript + TailwindCSS + Framer Motion). Landing page, auth pages, dashboard, Mind Mapper canvas stub, Spatial Canvas react-leaflet map with anchor pins, social feed skeleton, full typed API client, Docker + nginx, CI integrated.
    **✅ DONE — Sprint 2 (Part A)** — Full interactive ReactFlow mind map canvas at `/web-app/src/pages/MindMap.tsx` (route `/mind-mapper/:mapId`): glassmorphism nodes with focus score badge + color ring (green/yellow/red), animated gradient bezier edges, zoom/pan/MiniMap, FAB + slide-in drawer for adding nodes (title + parent selector), double-click inline edit, drag-to-reposition (PUT API), focus overlay mode (node size by focus_level), PNG export (html-to-image) + JSON export, dark/light mode.

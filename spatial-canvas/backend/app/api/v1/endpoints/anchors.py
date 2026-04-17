@@ -48,6 +48,7 @@ async def create_anchor(
             title=anchor.title,
             content=anchor.content,
             content_type=anchor.content_type,
+            media_url=anchor.media_url,
             latitude=anchor.latitude,
             longitude=anchor.longitude,
             created_at=anchor.created_at,
@@ -78,7 +79,7 @@ def get_anchors_nearby(
         ..., ge=-180, le=180, description="Longitude in decimal degrees"
     ),
     radius_km: float = Query(
-        1.0, ge=0.1, le=100, description="Search radius in kilometers"
+        1.0, ge=0.1, le=100, description="Search radius in km (converted to meters internally for Geography)"
     ),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
@@ -109,6 +110,7 @@ def get_anchors_nearby(
                     title=anchor.title,
                     content=anchor.content,
                     content_type=anchor.content_type,
+                    media_url=anchor.media_url,
                     latitude=anchor.latitude,
                     longitude=anchor.longitude,
                     created_at=anchor.created_at,
@@ -152,6 +154,7 @@ async def get_my_anchors(
                     title=anchor.title,
                     content=anchor.content,
                     content_type=anchor.content_type,
+                    media_url=anchor.media_url,
                     latitude=anchor.latitude,
                     longitude=anchor.longitude,
                     created_at=anchor.created_at,
@@ -230,6 +233,7 @@ def get_anchor(anchor_id: UUID, db: Session = Depends(get_db)):
             title=anchor.title,
             content=anchor.content,
             content_type=anchor.content_type,
+            media_url=anchor.media_url,
             latitude=anchor.latitude,
             longitude=anchor.longitude,
             created_at=anchor.created_at,
