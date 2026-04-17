@@ -27,25 +27,6 @@ spec:
       labels:
         app: postgres
     spec:
-      initContainers:
-        # Create all databases on first boot
-        - name: init-databases
-          image: postgres:15-alpine
-          command:
-            - sh
-            - -c
-            - |
-              until pg_isready -h localhost -U postgres; do
-                echo "Waiting for PostgreSQL to start..."
-                sleep 2
-              done
-              echo "PostgreSQL is ready"
-          env:
-            - name: PGPASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: zylvex-secrets
-                  key: POSTGRES_PASSWORD
       containers:
         - name: postgres
           image: postgis/postgis:15-3.4-alpine
@@ -60,9 +41,32 @@ spec:
                   key: POSTGRES_PASSWORD
             - name: POSTGRES_USER
               value: postgres
-            # Create multiple databases via init scripts
-            - name: POSTGRES_MULTIPLE_DATABASES
-              value: "auth_db,spatial_db,mm_db,social_db,notifications_db"
+            # Database user passwords injected from secrets for init script
+            - name: AUTH_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zylvex-secrets
+                  key: AUTH_DB_PASSWORD
+            - name: SPATIAL_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zylvex-secrets
+                  key: SPATIAL_DB_PASSWORD
+            - name: MM_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zylvex-secrets
+                  key: MM_DB_PASSWORD
+            - name: SOCIAL_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zylvex-secrets
+                  key: SOCIAL_DB_PASSWORD
+            - name: NOTIF_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zylvex-secrets
+                  key: NOTIF_DB_PASSWORD
           resources:
             requests:
               cpu: 250m
@@ -108,6 +112,7 @@ spec:
             storage: 20Gi
 ---
 # Init script ConfigMap to create multiple databases and users
+# Passwords are read from environment variables injected via Secrets
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -126,27 +131,27 @@ data:
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
       -- Auth service database
       CREATE DATABASE auth_db;
-      CREATE USER auth_user WITH ENCRYPTED PASSWORD '$(cat /run/secrets/auth_db_password 2>/dev/null || echo "changeme")';
+      CREATE USER auth_user WITH ENCRYPTED PASSWORD '$AUTH_DB_PASSWORD';
       GRANT ALL PRIVILEGES ON DATABASE auth_db TO auth_user;
 
       -- Spatial Canvas database (with PostGIS)
       CREATE DATABASE spatial_db;
-      CREATE USER spatial_user WITH ENCRYPTED PASSWORD '$(cat /run/secrets/spatial_db_password 2>/dev/null || echo "changeme")';
+      CREATE USER spatial_user WITH ENCRYPTED PASSWORD '$SPATIAL_DB_PASSWORD';
       GRANT ALL PRIVILEGES ON DATABASE spatial_db TO spatial_user;
 
       -- Mind Mapper database
       CREATE DATABASE mm_db;
-      CREATE USER mm_user WITH ENCRYPTED PASSWORD '$(cat /run/secrets/mm_db_password 2>/dev/null || echo "changeme")';
+      CREATE USER mm_user WITH ENCRYPTED PASSWORD '$MM_DB_PASSWORD';
       GRANT ALL PRIVILEGES ON DATABASE mm_db TO mm_user;
 
       -- Social service database
       CREATE DATABASE social_db;
-      CREATE USER social_user WITH ENCRYPTED PASSWORD '$(cat /run/secrets/social_db_password 2>/dev/null || echo "changeme")';
+      CREATE USER social_user WITH ENCRYPTED PASSWORD '$SOCIAL_DB_PASSWORD';
       GRANT ALL PRIVILEGES ON DATABASE social_db TO social_user;
 
       -- Notifications service database
       CREATE DATABASE notifications_db;
-      CREATE USER notif_user WITH ENCRYPTED PASSWORD '$(cat /run/secrets/notif_db_password 2>/dev/null || echo "changeme")';
+      CREATE USER notif_user WITH ENCRYPTED PASSWORD '$NOTIF_DB_PASSWORD';
       GRANT ALL PRIVILEGES ON DATABASE notifications_db TO notif_user;
     EOSQL
 

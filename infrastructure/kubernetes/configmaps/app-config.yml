@@ -30,11 +30,3 @@ data:
 
   # --- Shared ---
   ALLOWED_ORIGINS: "https://zylvex.com,https://www.zylvex.com"
-
-  # --- Database URLs (non-secret part, passwords in Secrets) ---
-  # These reference the in-cluster PostgreSQL. In production, replace with managed DB URLs.
-  AUTH_DATABASE_URL: "postgresql://auth_user:$(AUTH_DB_PASSWORD)@postgres.zylvex-production.svc.cluster.local:5432/auth_db"
-  SPATIAL_DATABASE_URL: "postgresql://spatial_user:$(SPATIAL_DB_PASSWORD)@postgres.zylvex-production.svc.cluster.local:5432/spatial_db"
-  MM_DATABASE_URL: "postgresql://mm_user:$(MM_DB_PASSWORD)@postgres.zylvex-production.svc.cluster.local:5432/mm_db"
-  SOCIAL_DATABASE_URL: "postgresql://social_user:$(SOCIAL_DB_PASSWORD)@postgres.zylvex-production.svc.cluster.local:5432/social_db"
-  NOTIFICATIONS_DATABASE_URL: "postgresql://notif_user:$(NOTIF_DB_PASSWORD)@postgres.zylvex-production.svc.cluster.local:5432/notifications_db"

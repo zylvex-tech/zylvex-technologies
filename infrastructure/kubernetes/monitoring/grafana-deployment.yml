@@ -62,6 +62,8 @@ spec:
         - name: grafana-datasources
           configMap:
             name: grafana-datasources
+        # NOTE: emptyDir is used for simplicity. For production, use a PVC
+        # to persist dashboards and settings across pod restarts.
         - name: grafana-data
           emptyDir: {}
 ---

@@ -45,5 +45,7 @@ spec:
             - name: redis-data
               mountPath: /data
       volumes:
+        # NOTE: emptyDir is used for simplicity. For production persistence,
+        # replace with a PersistentVolumeClaim.
         - name: redis-data
           emptyDir: {}

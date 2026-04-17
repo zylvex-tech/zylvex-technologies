@@ -55,6 +55,8 @@ spec:
         - name: prometheus-config
           configMap:
             name: prometheus-config
+        # NOTE: emptyDir is used for simplicity. For production, use a PVC
+        # to persist metrics across pod restarts.
         - name: prometheus-data
           emptyDir: {}
 ---

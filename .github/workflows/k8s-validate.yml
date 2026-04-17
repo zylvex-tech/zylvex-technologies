@@ -10,6 +10,8 @@ jobs:
   validate-manifests:
     name: Validate K8s Manifests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
