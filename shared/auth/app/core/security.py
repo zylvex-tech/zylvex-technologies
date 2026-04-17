@@ -10,7 +10,6 @@ import hashlib
 from app.core.config import settings
 from app.models.user import RefreshToken
 
-
 pwd_context = CryptContext(
     schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=settings.BCRYPT_ROUNDS
 )
