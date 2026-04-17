@@ -3,6 +3,9 @@ name: Update Repository Metadata
 on:
   workflow_dispatch:
 
+# Note: Updating repo description/topics requires admin-level access.
+# GITHUB_TOKEN works if the repository settings grant it write access to
+# "Administration". Otherwise, use a PAT stored as a repository secret.
 permissions:
   contents: read
 
