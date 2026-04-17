@@ -1,140 +1,137 @@
 name: PR Quality Gate
 
 on:
-  pull_request:
-    branches: [main]
+pull_request:
+branches: [main]
+
+permissions:
+contents: write
+pull-requests: write
+issues: write
+actions: write
 
 jobs:
-  quality-checks:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+quality-checks:
+runs-on: ubuntu-latest
 
-      - name: Configure git
-        run: |
-          echo "Configuring git identity for workflow operations..."
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          echo "✅ Git configuration complete"
+```
+outputs:
+  auth_changed: ${{ steps.changed-files.outputs.auth_changed }}
+  spatial_changed: ${{ steps.changed-files.outputs.spatial_changed }}
+  mobile_changed: ${{ steps.changed-files.outputs.mobile_changed }}
+  web_changed: ${{ steps.changed-files.outputs.web_changed }}
 
-      - name: Fetch base references
-        run: |
-          echo "Fetching base branch references..."
-          git fetch --no-tags --prune origin +refs/heads/main:refs/remotes/origin/main 2>/dev/null || {
-            echo "⚠️ Warning: Could not fetch origin/main. Falling back to local history if needed."
-          }
-          if git rev-parse --verify --quiet origin/main >/dev/null; then
-            echo "✅ origin/main is available for diff operations"
-          else
-            echo "⚠️ origin/main is unavailable; changed-file analysis will use fallback logic"
-          fi
+steps:
+  - uses: actions/checkout@v4
+    with:
+      fetch-depth: 0
 
-      - name: Check PR description
-        env:
-          PR_BODY: ${{ github.event.pull_request.body || '' }}
-        run: |
-          if [[ -z "${PR_BODY//[[:space:]]/}" ]]; then
-            echo "❌ PR description is empty. Please add a description."
-            exit 1
-          fi
-          echo "✅ PR description is present"
+  - name: Configure git
+    run: |
+      git config --global user.name 'github-actions[bot]'
+      git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+      git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-      - name: Check branch naming convention
-        run: |
-          BRANCH_NAME="${{ github.head_ref }}"
-          if [[ ! "$BRANCH_NAME" =~ ^(feature|bugfix|release|fix|chore|copilot)/ ]]; then
-            echo "❌ Branch name '$BRANCH_NAME' does not follow convention"
-            exit 1
-          fi
-          echo "✅ Branch name follows convention"
+  - name: Fetch base references
+    run: |
+      git fetch --no-tags --prune origin +refs/heads/main:refs/remotes/origin/main 2>/dev/null || true
 
-      - name: Analyze changed files
-        id: changed-files
-        run: |
-          echo "Analyzing changed files..."
+  - name: Check PR description
+    env:
+      PR_BODY: ${{ github.event.pull_request.body || '' }}
+    run: |
+      if [[ -z "${PR_BODY//[[:space:]]/}" ]]; then
+        echo "❌ PR description is empty. Please add a description."
+        exit 1
+      fi
+      echo "✅ PR description is present"
 
-          if git rev-parse --verify --quiet origin/main >/dev/null && git diff --name-only origin/main...HEAD >/tmp/changed-files.txt 2>/dev/null; then
-            echo "Using origin/main...HEAD diff range"
-          elif git rev-parse --verify --quiet HEAD~1 >/dev/null && git diff --name-only HEAD~1..HEAD >/tmp/changed-files.txt 2>/dev/null; then
-            echo "⚠️ Using fallback diff range HEAD~1..HEAD"
-          else
-            echo "⚠️ Unable to determine changed files from git history. Using empty change set."
-            : > /tmp/changed-files.txt
-          fi
+  - name: Check branch naming convention
+    run: |
+      BRANCH_NAME="${{ github.head_ref }}"
+      if [[ ! "$BRANCH_NAME" =~ ^(feature|bugfix|release|fix|chore|copilot)/ ]]; then
+        echo "❌ Branch name '$BRANCH_NAME' does not follow convention"
+        exit 1
+      fi
+      echo "✅ Branch name follows convention"
 
-          echo "Changed files:"
-          cat /tmp/changed-files.txt
+  - name: Analyze changed files
+    id: changed-files
+    run: |
+      if git rev-parse --verify --quiet origin/main >/dev/null; then
+        git diff --name-only origin/main...HEAD > /tmp/changed-files.txt
+      else
+        git diff --name-only HEAD~1..HEAD > /tmp/changed-files.txt || true
+      fi
 
-          CHANGED_AUTH=$(grep -q '^shared/auth/' /tmp/changed-files.txt && echo 'true' || echo 'false')
-          CHANGED_SPATIAL=$(grep -q '^spatial-canvas/backend/' /tmp/changed-files.txt && echo 'true' || echo 'false')
-          CHANGED_MOBILE=$(grep -q '^spatial-canvas/mobile/' /tmp/changed-files.txt && echo 'true' || echo 'false')
-          CHANGED_WEB=$(grep -q '^web-app/' /tmp/changed-files.txt && echo 'true' || echo 'false')
+      CHANGED_AUTH=$(grep -q '^shared/auth/' /tmp/changed-files.txt && echo 'true' || echo 'false')
+      CHANGED_SPATIAL=$(grep -q '^spatial-canvas/backend/' /tmp/changed-files.txt && echo 'true' || echo 'false')
+      CHANGED_MOBILE=$(grep -q '^spatial-canvas/mobile/' /tmp/changed-files.txt && echo 'true' || echo 'false')
+      CHANGED_WEB=$(grep -q '^web-app/' /tmp/changed-files.txt && echo 'true' || echo 'false')
 
-          echo "auth_changed=$CHANGED_AUTH" >> $GITHUB_OUTPUT
-          echo "spatial_changed=$CHANGED_SPATIAL" >> $GITHUB_OUTPUT
-          echo "mobile_changed=$CHANGED_MOBILE" >> $GITHUB_OUTPUT
-          echo "web_changed=$CHANGED_WEB" >> $GITHUB_OUTPUT
+      echo "auth_changed=$CHANGED_AUTH" >> $GITHUB_OUTPUT
+      echo "spatial_changed=$CHANGED_SPATIAL" >> $GITHUB_OUTPUT
+      echo "mobile_changed=$CHANGED_MOBILE" >> $GITHUB_OUTPUT
+      echo "web_changed=$CHANGED_WEB" >> $GITHUB_OUTPUT
 
-      - name: Post PR comment
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const { auth_changed, spatial_changed, mobile_changed, web_changed } = process.env;
-            const services = [];
-            if (auth_changed === 'true') services.push('Auth Service');
-            if (spatial_changed === 'true') services.push('Spatial Canvas Backend');
-            if (mobile_changed === 'true') services.push('Mobile App');
-            if (web_changed === 'true') services.push('Web App');
-            
-            const comment = `## ✅ PR Quality Gate Passed\n\n**Services changed:** ${services.length > 0 ? services.join(', ') : 'None (only documentation or config)'}`;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
-        env:
-          auth_changed: ${{ steps.changed-files.outputs.auth_changed }}
-          spatial_changed: ${{ steps.changed-files.outputs.spatial_changed }}
-          mobile_changed: ${{ steps.changed-files.outputs.mobile_changed }}
-          web_changed: ${{ steps.changed-files.outputs.web_changed }}
+  - name: Post PR comment
+    uses: actions/github-script@v7
+    with:
+      script: |
+        const services = [];
+        if (process.env.auth_changed === 'true') services.push('Auth Service');
+        if (process.env.spatial_changed === 'true') services.push('Spatial Canvas Backend');
+        if (process.env.mobile_changed === 'true') services.push('Mobile App');
+        if (process.env.web_changed === 'true') services.push('Web App');
 
-  web-app-ci:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    if: |
-      contains(github.event.pull_request.changed_files != 0, 'web-app') ||
-      true
-    defaults:
-      run:
-        working-directory: web-app
-    steps:
-      - uses: actions/checkout@v4
+        const comment = `## ✅ PR Quality Gate Passed
+```
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: web-app/package-lock.json
+**Services changed:** ${services.length > 0 ? services.join(', ') : 'None (docs/config only)'}`;
 
-      - name: Install dependencies
-        run: npm ci
+```
+        github.rest.issues.createComment({
+          issue_number: context.issue.number,
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          body: comment
+        });
+    env:
+      auth_changed: ${{ steps.changed-files.outputs.auth_changed }}
+      spatial_changed: ${{ steps.changed-files.outputs.spatial_changed }}
+      mobile_changed: ${{ steps.changed-files.outputs.mobile_changed }}
+      web_changed: ${{ steps.changed-files.outputs.web_changed }}
+```
 
-      - name: Lint
-        run: npm run lint
+web-app-ci:
+runs-on: ubuntu-latest
+needs: quality-checks
+if: needs.quality-checks.outputs.web_changed == 'true'
 
-      - name: Type-check & Build
-        run: npm run build
-        env:
-          VITE_AUTH_API_URL: http://localhost:8001
-          VITE_SPATIAL_API_URL: http://localhost:8000
-          VITE_MIND_MAPPER_API_URL: http://localhost:8002
+```
+defaults:
+  run:
+    working-directory: web-app
+
+steps:
+  - uses: actions/checkout@v4
+
+  - uses: actions/setup-node@v4
+    with:
+      node-version: '20'
+      cache: 'npm'
+      cache-dependency-path: web-app/package-lock.json
+
+  - name: Install dependencies
+    run: npm ci
+
+  - name: Lint
+    run: npm run lint
+
+  - name: Type-check & Build
+    run: npm run build
+    env:
+      VITE_AUTH_API_URL: http://localhost:8001
+      VITE_SPATIAL_API_URL: http://localhost:8000
+      VITE_MIND_MAPPER_API_URL: http://localhost:8002
+```
