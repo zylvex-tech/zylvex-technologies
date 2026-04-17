@@ -1,0 +1,49 @@
+name: Update Repository Metadata
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  update-meta:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set repository description, homepage & topics
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Update description and homepage
+          curl -sS -X PATCH \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}" \
+            -d '{
+              "description": "Spatial-social computing platform — AR anchors on the physical world + BCI-powered mind maps. The new interface between reality, cognition, and community.",
+              "homepage": "https://zylvex.com"
+            }'
+
+          # Update topics
+          curl -sS -X PUT \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/topics" \
+            -d '{
+              "names": [
+                "augmented-reality",
+                "spatial-computing",
+                "bci",
+                "mind-mapping",
+                "react-native",
+                "fastapi",
+                "postgis",
+                "websockets",
+                "typescript",
+                "python"
+              ]
+            }'
+
+          echo "✅ Repository metadata updated successfully"
