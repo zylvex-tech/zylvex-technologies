@@ -46,6 +46,7 @@ docs/notebooks/                6 Jupyter notebooks + exports/ (3D viz, BCI analy
 docs/business|development/     STUB (empty)
 tests/                         STUB (empty)
 scripts/                       cleanup-tokens.sh
+scripts/sandbox/               Developer sandbox: seed.py CLI, demo.py launcher, notebook data generator
 docs-site/                     Docusaurus v3 (TypeScript) documentation hub, port 3001
 docker-compose.full-stack.yml  One-command local stack (6 app services + 5 DBs + Redis + web-app + docs)
 ```
@@ -67,6 +68,7 @@ docker-compose.full-stack.yml  One-command local stack (6 app services + 5 DBs +
 - **CI/CD**: 6 GitHub Actions workflows + web-app CI in pr-checks.yml, Codecov integration, staging SSH deploy
 - **Docker Compose full-stack**: 6 app services + 5 DBs + Redis + web-app + docs-site with healthchecks, shared network
 - **Documentation site**: Docusaurus v3 (TypeScript) at `/docs-site/`, port 3001. Custom Zylvex theme (navy #1B2A4A, accent #6C63FF). Sections: getting-started (introduction, quickstart, architecture-overview with Mermaid), api-reference (auth, spatial-canvas, mind-mapper, social), guides (mobile-setup, database-migrations, testing-guide, contributing), business (product-vision, roadmap with Mermaid Gantt, monetization, competitive-analysis with Mermaid quadrant). Algolia DocSearch config stub. Dockerfile + nginx on port 3001.
+- **Developer Sandbox**: `/scripts/sandbox/` with `seed.py` (argparse CLI — `users`, `anchors`, `mindmaps`, `all --reset` subcommands), `demo.py` (one-command seeder + summary table + curl test commands), `generate_notebook_data.py` (exports anchors, mindmap tree, BCI sessions, users as JSON to `docs/notebooks/data/`). Uses Faker for realistic data, Rich for formatted output. Anchors span 5 African + 3 global cities. Mind maps use 4 topic templates with hierarchical node trees. State tracked in `seed_state.json`. `requirements.txt` + `README.md` included.
 
 ---
 

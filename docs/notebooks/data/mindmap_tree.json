@@ -1,0 +1,228 @@
+{
+  "id": "6ca99217-d184-4daa-b89f-c7677713bdb2",
+  "title": "Product Strategy",
+  "user_id": "db80c642-ec16-4cf4-8c01-3020adcb26f1",
+  "created_at": "2026-04-07T01:58:00.289255+00:00",
+  "nodes": [
+    {
+      "id": "507f3ca2-56e5-41f6-8ed9-05cbd11ccdd0",
+      "text": "Product Strategy",
+      "parent_id": null,
+      "focus_level": 26,
+      "color": "#00BFA6",
+      "x": 400,
+      "y": 50,
+      "depth": 0
+    },
+    {
+      "id": "71f7b237-6d06-442b-9dec-2ba8d1e3341c",
+      "text": "Market Research",
+      "parent_id": "507f3ca2-56e5-41f6-8ed9-05cbd11ccdd0",
+      "focus_level": 37,
+      "color": "#00BFA6",
+      "x": 100,
+      "y": 200,
+      "depth": 1
+    },
+    {
+      "id": "c715521c-a46c-4cc0-a1e2-06895919d26e",
+      "text": "Exploit Compelling Initiatives",
+      "parent_id": "71f7b237-6d06-442b-9dec-2ba8d1e3341c",
+      "focus_level": 77,
+      "color": "#FF6F61",
+      "x": 100,
+      "y": 350,
+      "depth": 2
+    },
+    {
+      "id": "d3e49db2-e9cd-445b-8e01-e1bf2785538a",
+      "text": "Architect Back-End Communities",
+      "parent_id": "71f7b237-6d06-442b-9dec-2ba8d1e3341c",
+      "focus_level": 54,
+      "color": "#FFD93D",
+      "x": 160,
+      "y": 350,
+      "depth": 2
+    },
+    {
+      "id": "17ddb3f8-6e7a-42fb-a743-34ec501f7fc4",
+      "text": "Re-Contextualize Cross-Media Niches",
+      "parent_id": "71f7b237-6d06-442b-9dec-2ba8d1e3341c",
+      "focus_level": 79,
+      "color": "#FF6F61",
+      "x": 220,
+      "y": 350,
+      "depth": 2
+    },
+    {
+      "id": "8b5e96dc-8a82-4dfb-a472-f9b34ae6777f",
+      "text": "Grow Dot-Com E-Services",
+      "parent_id": "71f7b237-6d06-442b-9dec-2ba8d1e3341c",
+      "focus_level": 64,
+      "color": "#FF6F61",
+      "x": 280,
+      "y": 350,
+      "depth": 2
+    },
+    {
+      "id": "858f825f-23c1-4baa-aa76-06cbcd236fe7",
+      "text": "Product Vision",
+      "parent_id": "507f3ca2-56e5-41f6-8ed9-05cbd11ccdd0",
+      "focus_level": 26,
+      "color": "#00BFA6",
+      "x": 280,
+      "y": 200,
+      "depth": 1
+    },
+    {
+      "id": "2cb8d3af-5e0a-4283-bb91-cf3042364a8d",
+      "text": "Reinvent Collaborative Eyeballs",
+      "parent_id": "858f825f-23c1-4baa-aa76-06cbcd236fe7",
+      "focus_level": 94,
+      "color": "#FF6F61",
+      "x": 280,
+      "y": 350,
+      "depth": 2
+    },
+    {
+      "id": "e673338e-d22e-49b3-ba4b-a66962d50a1a",
+      "text": "Disintermediate Innovative E-Services",
+      "parent_id": "858f825f-23c1-4baa-aa76-06cbcd236fe7",
+      "focus_level": 89,
+      "color": "#FF6F61",
+      "x": 340,
+      "y": 350,
+      "depth": 2
+    },
+    {
+      "id": "c5ccb25e-2010-43aa-94f2-8c8ac049c295",
+      "text": "Exploit Web-Enabled Methodologies",
+      "parent_id": "858f825f-23c1-4baa-aa76-06cbcd236fe7",
+      "focus_level": 40,
+      "color": "#6C63FF",
+      "x": 400,
+      "y": 350,
+      "depth": 2
+    },
+    {
+      "id": "a0ae019e-6e68-4c14-a379-0dd7974af471",
+      "text": "Roadmap",
+      "parent_id": "507f3ca2-56e5-41f6-8ed9-05cbd11ccdd0",
+      "focus_level": 80,
+      "color": "#FF6F61",
+      "x": 460,
+      "y": 200,
+      "depth": 1
+    },
+    {
+      "id": "d1830864-3279-430a-9308-98bf3a10c0af",
+      "text": "Benchmark Wireless Roi",
+      "parent_id": "a0ae019e-6e68-4c14-a379-0dd7974af471",
+      "focus_level": 75,
+      "color": "#FF6F61",
+      "x": 460,
+      "y": 350,
+      "depth": 2
+    },
+    {
+      "id": "3478c4b9-20b8-4c8f-a3bd-ad06547944c2",
+      "text": "Disintermediate Bricks-And-Clicks Systems",
+      "parent_id": "a0ae019e-6e68-4c14-a379-0dd7974af471",
+      "focus_level": 47,
+      "color": "#00BFA6",
+      "x": 520,
+      "y": 350,
+      "depth": 2
+    },
+    {
+      "id": "4c438094-6f95-4e9e-a507-7365e86e213b",
+      "text": "Incubate E-Business Networks",
+      "parent_id": "a0ae019e-6e68-4c14-a379-0dd7974af471",
+      "focus_level": 57,
+      "color": "#FF6F61",
+      "x": 580,
+      "y": 350,
+      "depth": 2
+    },
+    {
+      "id": "945d050f-c8b9-4ee7-a8d7-c0f9767af4af",
+      "text": "Enable Cross-Platform Supply-Chains",
+      "parent_id": "a0ae019e-6e68-4c14-a379-0dd7974af471",
+      "focus_level": 43,
+      "color": "#00BFA6",
+      "x": 640,
+      "y": 350,
+      "depth": 2
+    },
+    {
+      "id": "2d5ecbb9-82e1-437c-83a9-7ce9eb4b3a6d",
+      "text": "Metrics",
+      "parent_id": "507f3ca2-56e5-41f6-8ed9-05cbd11ccdd0",
+      "focus_level": 47,
+      "color": "#00BFA6",
+      "x": 640,
+      "y": 200,
+      "depth": 1
+    },
+    {
+      "id": "7b8ad91b-195f-42f6-ba32-152c94b57ea6",
+      "text": "Transform B2B Initiatives",
+      "parent_id": "2d5ecbb9-82e1-437c-83a9-7ce9eb4b3a6d",
+      "focus_level": 34,
+      "color": "#00BFA6",
+      "x": 640,
+      "y": 350,
+      "depth": 2
+    },
+    {
+      "id": "cfecd6b8-a1d1-4f08-8f81-afde42c35edd",
+      "text": "Visualize Seamless Metrics",
+      "parent_id": "2d5ecbb9-82e1-437c-83a9-7ce9eb4b3a6d",
+      "focus_level": 49,
+      "color": "#4FC3F7",
+      "x": 700,
+      "y": 350,
+      "depth": 2
+    },
+    {
+      "id": "76c464bf-4b5a-46a9-bf79-b2ddb5d8a8ff",
+      "text": "Evolve Seamless Metrics",
+      "parent_id": "2d5ecbb9-82e1-437c-83a9-7ce9eb4b3a6d",
+      "focus_level": 49,
+      "color": "#4FC3F7",
+      "x": 760,
+      "y": 350,
+      "depth": 2
+    },
+    {
+      "id": "094bf3db-a665-490f-899a-62dd7cb71612",
+      "text": "Team",
+      "parent_id": "507f3ca2-56e5-41f6-8ed9-05cbd11ccdd0",
+      "focus_level": 84,
+      "color": "#FF6F61",
+      "x": 820,
+      "y": 200,
+      "depth": 1
+    },
+    {
+      "id": "42a40094-9c3a-4fdf-bc06-f10c6e03913e",
+      "text": "Reinvent Global Info-Mediaries",
+      "parent_id": "094bf3db-a665-490f-899a-62dd7cb71612",
+      "focus_level": 33,
+      "color": "#FF6F61",
+      "x": 820,
+      "y": 350,
+      "depth": 2
+    },
+    {
+      "id": "b157ff17-baa5-4148-880f-2b3248b07571",
+      "text": "Redefine Leading-Edge Channels",
+      "parent_id": "094bf3db-a665-490f-899a-62dd7cb71612",
+      "focus_level": 47,
+      "color": "#00BFA6",
+      "x": 880,
+      "y": 350,
+      "depth": 2
+    }
+  ]
+}
