@@ -40,11 +40,13 @@ mind-mapper/backend-services/  FastAPI mind map + node tree + BCI session API
 mind-mapper/mobile-bci/        React Native BCI app with focus slider (Expo, TS)
 mind-mapper/desktop-studio|ml-models/  STUB (empty)
 web-app/                       React 18 + Vite + TS + Tailwind web frontend (both products)
-infrastructure/kubernetes|terraform|monitoring/  STUB (empty)
+infrastructure/monitoring/             Prometheus + Grafana + Alertmanager monitoring stack
+infrastructure/kubernetes|terraform/  STUB (empty)
 docs/architecture/             ADRs + auth contract (3 files)
 docs/notebooks/                6 Jupyter notebooks + exports/ (3D viz, BCI analysis, spatial analytics)
 docs/business|development/     STUB (empty)
-tests/                         STUB (empty)
+tests/e2e/                     Playwright + pytest E2E tests (33 scenarios)
+tests/load/                    Locust load test scenarios
 scripts/                       cleanup-tokens.sh
 scripts/sandbox/               Developer sandbox: seed.py CLI, demo.py launcher, notebook data generator
 docs-site/                     Docusaurus v3 (TypeScript) documentation hub, port 3001
@@ -67,8 +69,10 @@ SECURITY.md                    Responsible disclosure policy (security@zylvex.co
 - **Web App**: React 18 + Vite + TypeScript + TailwindCSS + Framer Motion at `/web-app/`. Landing page (animated gradient, product cards, waitlist form), auth pages (/login, /register, /forgot-password), dashboard with sidebar, Mind Mapper canvas (**Sprint 2**: full ReactFlow canvas at `/mind-mapper/:mapId` — glassmorphism nodes, animated gradient edges, minimap, FAB drawer, inline edit, drag-to-save, focus overlay, PNG+JSON export, dark/light mode), Spatial Canvas react-leaflet map with anchor pins + detail drawer, social feed skeleton, full typed API client, Dockerfile + nginx, CI in pr-checks.yml. **Sprint 3**: NotificationsContext (WebSocket to realtime gateway, toast on events), notification bell icon in AppShell top bar with unread count badge, dropdown showing last 10 notifications with mark-read.
 - **Jupyter Notebooks**: Six production-quality notebooks at `/docs/notebooks/`. **Visualization Sprint** (latest): `spatial_canvas_3d.ipynb` (200 anchors across 4 cities — Folium clustered map, 3D Plotly scatter, animated timeline, analytics charts, ipywidgets sandbox), `mind_map_3d.ipynb` (25-node hierarchical tree — NetworkX 3D spring/circular/kamada_kawai layout, focus-colored Plotly 3D network, session timeline, BCI heatmap, interactive sandbox), `bci_focus_analysis.ipynb` (5 BCI sessions × 600 pts — multi-session overlay, rolling average + SciPy peak detection, 3D surface, violin plots, focus-vs-creation correlation with regression, sandbox). All use `plotly_dark` theme, export standalone HTML to `exports/`. Legacy notebooks also preserved. `requirements.txt` + `README.md` included.
 - **SECURITY.md**: Responsible disclosure policy at root. Contact security@zylvex.com. 48h ack, 5-day triage, 30-day fix for critical/high. Scope: all services, web app, mobile apps, infra.
-- **CI/CD**: 7 GitHub Actions workflows (6 CI + `update-repo-meta.yml` for repo presentation) + web-app CI in pr-checks.yml, Codecov integration, staging SSH deploy
+- **CI/CD**: 8 GitHub Actions workflows (6 CI + `update-repo-meta.yml` for repo presentation + `e2e-tests.yml` for E2E on PRs) + web-app CI in pr-checks.yml, Codecov integration, staging SSH deploy
 - **Docker Compose full-stack**: 6 app services + 5 DBs + Redis + web-app + docs-site with healthchecks, shared network
+- **Monitoring Stack**: Prometheus + Grafana + Alertmanager at `/infrastructure/monitoring/`. Prometheus scrapes all 7 services every 15 s. Alert rules: HighErrorRate (5xx >5%), SlowResponseTime (p99 >2s), ServiceDown (1m), HighMemoryUsage (>85%), AuthFailureSpike (>50 failed logins/min). Grafana: auto-provisioned Prometheus datasource, 2 dashboards (platform overview + auth service). All FastAPI services instrumented with `prometheus-fastapi-instrumentator`. `docker-compose.monitoring.yml` with Prometheus :9090, Grafana :3000, Alertmanager :9093.
+- **E2E Tests**: Playwright + pytest E2E test suite at `/tests/`. 33 E2E scenarios: auth flow (8), anchor flow (8), mind map flow (6), social flow (6), web app UI (5). Locust load tests with weighted task distribution (60% read, 20% mindmap, 15% create, 5% login). `docker-compose.tests.yml` spins up full stack + test runner. `e2e-tests.yml` GitHub Actions workflow runs on PRs to main.
 - **README.md**: World-class investor-grade README with hero section, two-product table, Mermaid architecture diagram, 3-command quick start, screenshot placeholders, notebook previews, CI badges, and phased roadmap with checkboxes.
 - **Documentation site**: Docusaurus v3 (TypeScript) at `/docs-site/`, port 3001. Custom Zylvex theme (navy #1B2A4A, accent #6C63FF). Sections: getting-started (introduction, quickstart, architecture-overview with Mermaid), api-reference (auth, spatial-canvas, mind-mapper, social), guides (mobile-setup, database-migrations, testing-guide, contributing), business (product-vision, roadmap with Mermaid Gantt, monetization, competitive-analysis with Mermaid quadrant). Algolia DocSearch config stub. Dockerfile + nginx on port 3001.
 - **Developer Sandbox**: `/scripts/sandbox/` with `seed.py` (argparse CLI — `users`, `anchors`, `mindmaps`, `all --reset` subcommands), `demo.py` (one-command seeder + summary table + curl test commands), `generate_notebook_data.py` (exports anchors, mindmap tree, BCI sessions, users as JSON to `docs/notebooks/data/`). Uses Faker for realistic data, Rich for formatted output. Anchors span 5 African + 3 global cities. Mind maps use 4 topic templates with hierarchical node trees. State tracked in `seed_state.json`. `requirements.txt` + `README.md` included.
@@ -81,9 +85,8 @@ SECURITY.md                    Responsible disclosure policy (security@zylvex.co
 shared/analytics|billing/
 spatial-canvas/desktop/
 mind-mapper/desktop-studio|ml-models/
-infrastructure/kubernetes|terraform|monitoring/
+infrastructure/kubernetes|terraform/
 docs/business|development/
-tests/
 ```
 
 ---
@@ -165,10 +168,10 @@ Commit format: Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `refacto
    **✅ DONE — Visualization Sprint** — Three production-quality notebooks added to `/docs/notebooks/`: `spatial_canvas_3d.ipynb` (200 anchors across Lagos/Nairobi/London/São Paulo — Folium clustered map, 3D Plotly scatter, animated timeline, bar/pie/time-series analytics, ipywidgets sandbox with radius/reactions/city filters), `mind_map_3d.ipynb` (25-node hierarchical tree — NetworkX 3D layouts spring/circular/kamada_kawai, focus-score colored Plotly network graph, session timeline animation, BCI heatmap, interactive sandbox), `bci_focus_analysis.ipynb` (5 sessions × 600 data points — multi-session overlay, SciPy rolling average + peak detection, 3D surface plot, violin distributions, focus-vs-creation correlation with regression, session explorer sandbox). All `plotly_dark` theme. Exports standalone HTML to `docs/notebooks/exports/`. Updated README.md + requirements.txt.
 9. Kubernetes manifests + Helm charts
 10. Terraform IaC (AWS/GCP)
-11. Monitoring: Prometheus + Grafana + alerting
+11. ~~Monitoring: Prometheus + Grafana + alerting~~ **✅ DONE** — `/infrastructure/monitoring/` Prometheus + Grafana + Alertmanager stack. Prometheus scrapes all 7 services every 15s. Alert rules: HighErrorRate (>5% 5xx), SlowResponseTime (p99 >2s), ServiceDown (1m), HighMemoryUsage (>85%), AuthFailureSpike (>50 failed logins/min). Grafana auto-provisioned with 2 dashboards (platform overview + auth service). All FastAPI services instrumented with `prometheus-fastapi-instrumentator`. `docker-compose.monitoring.yml`.
 12. ~~Notifications service (push, email, in-app)~~ **✅ DONE — Sprint 3 (Part B+C)** — `/shared/notifications/` FastAPI service on port 8005. `POST /notifications/send` (internal), `GET /notifications/me` (paginated), `POST /notifications/mark-read/{id}`, `POST /notifications/mark-all-read`. PostgreSQL table: id, user_id, type, title, body, metadata JSONB, read, created_at. Types: follow, reaction, nearby_anchor, collaboration_invite. SendGrid HTML email for follow+reaction (dark-themed, Zylvex branded). Push notification stub (APNs/FCM TODO). Alembic migrations, 10 tests, Dockerfile. Web app: NotificationsContext (WebSocket + toast on events), bell icon in AppShell top bar with unread badge, dropdown last 10 notifications, mark-read. Docker Compose: added Redis + realtime-service + notifications-service + postgres-notifications.
 13. ~~Documentation site~~ **✅ DONE** — `/docs-site/` Docusaurus v3 (TypeScript), port 3001. Custom Zylvex theme (navy #1B2A4A, accent #6C63FF). 12 docs across getting-started, api-reference, guides, business sections. Mermaid diagrams (architecture, sequence, Gantt, quadrant). Algolia DocSearch config stub. Dockerfile + nginx. Added to docker-compose.full-stack.yml.
 14. Analytics service (event pipeline, funnels, retention)
 15. Billing service (Stripe, Free/Pro/Team tiers)
 16. Real BCI hardware adapter (Neurosity/OpenBCI/Muse)
-17. E2E tests: Playwright (web) + Detox (mobile)
+17. ~~E2E tests: Playwright (web) + Detox (mobile)~~ **✅ DONE** — `/tests/` Playwright + pytest E2E test suite. 33 E2E scenarios across 5 test files: auth flow (8), anchor flow (8), mind map flow (6), social flow (6), web app UI with Playwright browser (5). Locust load tests (100 concurrent users, weighted: 60% read, 20% mindmap, 15% create, 5% login). `docker-compose.tests.yml` spins up full stack + test runner. `e2e-tests.yml` GitHub Actions workflow runs on PRs to main. `tests/README.md` with run instructions.

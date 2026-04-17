@@ -220,3 +220,16 @@ networks:
   zylvex:
     name: zylvex-network
 
+# --------------------------------------------------------------------------
+# Monitoring Stack (Prometheus + Grafana + Alertmanager)
+# --------------------------------------------------------------------------
+# The monitoring stack is defined separately in:
+#   infrastructure/monitoring/docker-compose.monitoring.yml
+#
+# Start it after this stack is running:
+#   cd infrastructure/monitoring
+#   docker compose -f docker-compose.monitoring.yml up -d
+#
+# See infrastructure/monitoring/README.md for details.
+# --------------------------------------------------------------------------
+

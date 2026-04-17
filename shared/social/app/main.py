@@ -1,6 +1,7 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api.social import router as social_router
 
@@ -28,6 +29,8 @@ app.add_middleware(
 )
 
 app.include_router(social_router, prefix="/social", tags=["social"])
+
+Instrumentator().instrument(app).expose(app)
 
 
 @app.get("/")

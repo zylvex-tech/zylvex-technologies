@@ -1,0 +1,65 @@
+groups:
+  - name: auth_service_alerts
+    rules:
+      - alert: AuthServiceDown
+        expr: up{job="auth-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: auth
+        annotations:
+          summary: "Auth service is down"
+          description: "Auth service target has been unreachable for more than 1 minute."
+
+      - alert: AuthHighErrorRate
+        expr: >
+          (
+            sum(rate(http_requests_total{job="auth-service", status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total{job="auth-service"}[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: auth
+        annotations:
+          summary: "Auth service high 5xx error rate"
+          description: "Auth service is returning > 5% 5xx responses over the last 5 minutes. Current value: {{ $value | humanizePercentage }}."
+
+      - alert: AuthSlowResponseTime
+        expr: >
+          histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job="auth-service"}[5m])) by (le))
+          > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: auth
+        annotations:
+          summary: "Auth service p99 latency is high"
+          description: "Auth service p99 latency is above 2 seconds. Current value: {{ $value }}s."
+
+      - alert: AuthHighMemoryUsage
+        expr: >
+          process_resident_memory_bytes{job="auth-service"}
+          /
+          (1024 * 1024 * 1024)
+          > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: auth
+        annotations:
+          summary: "Auth service high memory usage"
+          description: "Auth service memory usage is above 85%. Current value: {{ $value }}GB."
+
+      - alert: AuthFailureSpike
+        expr: >
+          sum(rate(http_requests_total{job="auth-service", handler="/auth/login", status="401"}[1m])) * 60
+          > 50
+        for: 1m
+        labels:
+          severity: critical
+          service: auth
+        annotations:
+          summary: "Possible brute force attack detected"
+          description: "More than 50 failed login attempts per minute on auth service. Current rate: {{ $value }}/min. Possible brute force attack."

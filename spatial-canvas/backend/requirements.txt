@@ -24,6 +24,7 @@ httpx==0.25.1
 
 # Rate limiting
 slowapi>=0.1.9
+prometheus-fastapi-instrumentator>=7.0.0
 
 # Development
 black==26.3.1
