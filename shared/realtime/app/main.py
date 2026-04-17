@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.api.connection_manager import manager
 from app.api.ws import router as ws_router
@@ -40,6 +41,8 @@ app.add_middleware(
 )
 
 app.include_router(ws_router)
+
+Instrumentator().instrument(app).expose(app)
 
 
 @app.get("/")

@@ -1,0 +1,73 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - localhost:9093
+
+rule_files:
+  - /etc/prometheus/alerts/*.yml
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: "auth-service"
+    metrics_path: /metrics
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["auth-service:8001"]
+        labels:
+          service: "auth"
+
+  - job_name: "spatial-canvas-backend"
+    metrics_path: /metrics
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["spatial-canvas-backend:8000"]
+        labels:
+          service: "spatial-canvas"
+
+  - job_name: "mind-mapper-backend"
+    metrics_path: /metrics
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["mind-mapper-backend:8002"]
+        labels:
+          service: "mind-mapper"
+
+  - job_name: "social-service"
+    metrics_path: /metrics
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["social-service:8003"]
+        labels:
+          service: "social"
+
+  - job_name: "notifications-service"
+    metrics_path: /metrics
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["notifications-service:8005"]
+        labels:
+          service: "notifications"
+
+  - job_name: "realtime-gateway"
+    metrics_path: /metrics
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["realtime-service:8004"]
+        labels:
+          service: "realtime"
+
+  - job_name: "web-app"
+    metrics_path: /stub_metrics
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["web-app:80"]
+        labels:
+          service: "web-app"
