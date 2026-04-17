@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -20,6 +21,14 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8001
     DEBUG: bool = False
+
+    # Email (SendGrid)
+    SENDGRID_API_KEY: Optional[str] = None
+    EMAIL_FROM: str = "noreply@zylvex.io"
+    EMAIL_FROM_NAME: str = "Zylvex"
+
+    # Frontend URL for email links
+    FRONTEND_URL: str = "http://localhost:3000"
 
     class Config:
         env_file = ".env"

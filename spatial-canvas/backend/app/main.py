@@ -3,6 +3,7 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import logging
 
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -44,6 +45,11 @@ app.add_middleware(
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# Mount static file serving for media uploads
+media_path = settings.MEDIA_STORAGE_PATH
+os.makedirs(media_path, exist_ok=True)
+app.mount("/media", StaticFiles(directory=media_path), name="media")
 
 
 @app.get("/")

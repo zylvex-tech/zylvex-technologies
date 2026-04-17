@@ -3,7 +3,7 @@
 import uuid
 from sqlalchemy import Column, String, Text, Float, DateTime
 from sqlalchemy.dialects.postgresql import UUID
-from geoalchemy2 import Geometry
+from geoalchemy2 import Geography
 from sqlalchemy.sql import func
 
 from app.db.base import Base
@@ -20,9 +20,10 @@ class Anchor(Base):
     content_type = Column(
         String(50), nullable=False, default="text"
     )  # text, image, video, audio
+    media_url = Column(String(512), nullable=True)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
-    location = Column(Geometry("POINT", srid=4326), nullable=False)
+    location = Column(Geography("POINT", srid=4326), nullable=False)
 
     # Foreign key to auth service users
     user_id = Column(UUID(as_uuid=True), nullable=False, index=True)

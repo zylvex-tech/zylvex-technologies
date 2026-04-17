@@ -43,6 +43,7 @@ class AnchorResponse(AnchorBase):
 
     id: UUID
     user_id: UUID
+    media_url: Optional[str] = Field(None, description="URL to uploaded media file")
     owner_name: Optional[str] = Field(None, description="Full name of anchor owner")
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

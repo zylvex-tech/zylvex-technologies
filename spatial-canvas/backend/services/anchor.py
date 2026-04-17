@@ -19,9 +19,10 @@ class AnchorService:
     def create_anchor(db: Session, anchor_data: AnchorCreate, user_id: UUID) -> Anchor:
         """Create a new anchor for authenticated user."""
         try:
-            # Create WKT point for PostGIS
+            # Create WKT point for PostGIS Geography
             point = WKTElement(
-                f"POINT({anchor_data.longitude} {anchor_data.latitude})", srid=4326
+                f"POINT({anchor_data.longitude} {anchor_data.latitude})",
+                srid=4326,
             )
 
             anchor = Anchor(
@@ -55,21 +56,25 @@ class AnchorService:
         skip: int = 0,
         limit: int = 100,
     ) -> list:
-        """Get anchors within radius of a location."""
+        """Get anchors within radius of a location.
+
+        Uses Geography type with ST_DWithin for meter-accurate distance
+        calculations at all latitudes.
+        """
         try:
-            # Convert km to degrees (equatorial approximation; 1° ≈ 111 km).
-            # Note: Accuracy degrades at higher latitudes (~50% error at 60°N).
-            # For production use, migrate to Geography('POINT', srid=4326) and
-            # call ST_DWithin with radius in meters for meter-accurate results.
-            radius_deg = radius_km / 111.0
+            # Convert km to meters for Geography ST_DWithin
+            radius_meters = radius_km * 1000
 
             # Create point for distance calculation
-            point = WKTElement(f"POINT({longitude} {latitude})", srid=4326)
+            point = WKTElement(
+                f"POINT({longitude} {latitude})", srid=4326
+            )
 
             # Query anchors within radius using PostGIS ST_DWithin
+            # Geography type uses meters, so results are accurate at all latitudes
             anchors = (
                 db.query(Anchor)
-                .filter(func.ST_DWithin(Anchor.location, point, radius_deg))
+                .filter(func.ST_DWithin(Anchor.location, point, radius_meters))
                 .order_by(Anchor.created_at.desc())
                 .offset(skip)
                 .limit(limit)
