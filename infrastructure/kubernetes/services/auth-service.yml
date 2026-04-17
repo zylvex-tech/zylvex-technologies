@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: zylvex-production
+  labels:
+    app: auth-service
+    app.kubernetes.io/part-of: zylvex
+spec:
+  type: ClusterIP
+  selector:
+    app: auth-service
+  ports:
+    - port: 8001
+      targetPort: 8001
+      protocol: TCP
+      name: http

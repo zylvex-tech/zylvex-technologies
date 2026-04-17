@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mind-mapper-backend
+  namespace: zylvex-production
+  labels:
+    app: mind-mapper-backend
+    app.kubernetes.io/part-of: zylvex
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mind-mapper-backend
+  template:
+    metadata:
+      labels:
+        app: mind-mapper-backend
+    spec:
+      containers:
+        - name: mind-mapper-backend
+          image: ghcr.io/zylvex-tech/mind-mapper-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8002
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: zylvex-secrets
+                  key: MM_DATABASE_URL
+            - name: AUTH_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: zylvex-app-config
+                  key: AUTH_SERVICE_URL
+            - name: ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: zylvex-app-config
+                  key: ALLOWED_ORIGINS

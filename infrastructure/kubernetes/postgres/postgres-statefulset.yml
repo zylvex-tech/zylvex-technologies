@@ -1,0 +1,158 @@
+# ============================================================================
+# PostgreSQL StatefulSet for Zylvex Production
+# ============================================================================
+# NOTE: This runs a single PostgreSQL instance for development/testing.
+# For real production, use a managed database service:
+#   - AWS RDS / Aurora
+#   - GCP Cloud SQL
+#   - DigitalOcean Managed Databases
+#   - Azure Database for PostgreSQL
+# ============================================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: zylvex-production
+  labels:
+    app: postgres
+    app.kubernetes.io/part-of: zylvex
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      initContainers:
+        # Create all databases on first boot
+        - name: init-databases
+          image: postgres:15-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h localhost -U postgres; do
+                echo "Waiting for PostgreSQL to start..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready"
+          env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zylvex-secrets
+                  key: POSTGRES_PASSWORD
+      containers:
+        - name: postgres
+          image: postgis/postgis:15-3.4-alpine
+          ports:
+            - containerPort: 5432
+              protocol: TCP
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zylvex-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_USER
+              value: postgres
+            # Create multiple databases via init scripts
+            - name: POSTGRES_MULTIPLE_DATABASES
+              value: "auth_db,spatial_db,mm_db,social_db,notifications_db"
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - postgres
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - postgres
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+              subPath: pgdata
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: init-scripts
+          configMap:
+            name: postgres-init-scripts
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 20Gi
+---
+# Init script ConfigMap to create multiple databases and users
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-scripts
+  namespace: zylvex-production
+  labels:
+    app: postgres
+    app.kubernetes.io/part-of: zylvex
+data:
+  01-create-databases.sh: |
+    #!/bin/bash
+    set -e
+
+    echo "Creating databases and users..."
+
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
+      -- Auth service database
+      CREATE DATABASE auth_db;
+      CREATE USER auth_user WITH ENCRYPTED PASSWORD '$(cat /run/secrets/auth_db_password 2>/dev/null || echo "changeme")';
+      GRANT ALL PRIVILEGES ON DATABASE auth_db TO auth_user;
+
+      -- Spatial Canvas database (with PostGIS)
+      CREATE DATABASE spatial_db;
+      CREATE USER spatial_user WITH ENCRYPTED PASSWORD '$(cat /run/secrets/spatial_db_password 2>/dev/null || echo "changeme")';
+      GRANT ALL PRIVILEGES ON DATABASE spatial_db TO spatial_user;
+
+      -- Mind Mapper database
+      CREATE DATABASE mm_db;
+      CREATE USER mm_user WITH ENCRYPTED PASSWORD '$(cat /run/secrets/mm_db_password 2>/dev/null || echo "changeme")';
+      GRANT ALL PRIVILEGES ON DATABASE mm_db TO mm_user;
+
+      -- Social service database
+      CREATE DATABASE social_db;
+      CREATE USER social_user WITH ENCRYPTED PASSWORD '$(cat /run/secrets/social_db_password 2>/dev/null || echo "changeme")';
+      GRANT ALL PRIVILEGES ON DATABASE social_db TO social_user;
+
+      -- Notifications service database
+      CREATE DATABASE notifications_db;
+      CREATE USER notif_user WITH ENCRYPTED PASSWORD '$(cat /run/secrets/notif_db_password 2>/dev/null || echo "changeme")';
+      GRANT ALL PRIVILEGES ON DATABASE notifications_db TO notif_user;
+    EOSQL
+
+    # Enable PostGIS on spatial_db
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "spatial_db" <<-EOSQL
+      CREATE EXTENSION IF NOT EXISTS postgis;
+    EOSQL
+
+    echo "All databases and users created successfully."

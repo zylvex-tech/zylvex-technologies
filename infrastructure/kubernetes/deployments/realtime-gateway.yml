@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: realtime-gateway
+  namespace: zylvex-production
+  labels:
+    app: realtime-gateway
+    app.kubernetes.io/part-of: zylvex
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: realtime-gateway
+  template:
+    metadata:
+      labels:
+        app: realtime-gateway
+    spec:
+      containers:
+        - name: realtime-gateway
+          image: ghcr.io/zylvex-tech/realtime-gateway:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8004
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8004
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8004
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          env:
+            - name: AUTH_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: zylvex-app-config
+                  key: AUTH_SERVICE_URL
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: zylvex-app-config
+                  key: REDIS_URL
+            - name: HEARTBEAT_INTERVAL
+              valueFrom:
+                configMapKeyRef:
+                  name: zylvex-app-config
+                  key: HEARTBEAT_INTERVAL
+            - name: ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: zylvex-app-config
+                  key: ALLOWED_ORIGINS

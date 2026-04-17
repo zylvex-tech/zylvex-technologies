@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: social-service
+  namespace: zylvex-production
+  labels:
+    app: social-service
+    app.kubernetes.io/part-of: zylvex
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: social-service
+  template:
+    metadata:
+      labels:
+        app: social-service
+    spec:
+      containers:
+        - name: social-service
+          image: ghcr.io/zylvex-tech/social-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8003
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8003
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8003
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: zylvex-secrets
+                  key: SOCIAL_DATABASE_URL
+            - name: AUTH_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: zylvex-app-config
+                  key: AUTH_SERVICE_URL
+            - name: SPATIAL_CANVAS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: zylvex-app-config
+                  key: SPATIAL_CANVAS_URL
+            - name: ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: zylvex-app-config
+                  key: ALLOWED_ORIGINS

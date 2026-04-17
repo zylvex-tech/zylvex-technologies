@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: spatial-canvas-backend
+  namespace: zylvex-production
+  labels:
+    app: spatial-canvas-backend
+    app.kubernetes.io/part-of: zylvex
+spec:
+  type: ClusterIP
+  selector:
+    app: spatial-canvas-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
