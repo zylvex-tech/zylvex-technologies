@@ -57,6 +57,7 @@ def root():
 @app.get("/health")
 def health_check():
     return {
-        "status": "healthy",
+        "status": "ok",
+        "service": "realtime-gateway",
         "connections": manager.connection_count,
     }

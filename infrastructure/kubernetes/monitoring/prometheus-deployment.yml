@@ -1,0 +1,123 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: zylvex-production
+  labels:
+    app: prometheus
+    app.kubernetes.io/part-of: zylvex
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.51.0
+          ports:
+            - containerPort: 9090
+              protocol: TCP
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus"
+            - "--storage.tsdb.retention.time=15d"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/prometheus
+            - name: prometheus-data
+              mountPath: /prometheus
+      volumes:
+        - name: prometheus-config
+          configMap:
+            name: prometheus-config
+        # NOTE: emptyDir is used for simplicity. For production, use a PVC
+        # to persist metrics across pod restarts.
+        - name: prometheus-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: zylvex-production
+  labels:
+    app: prometheus
+    app.kubernetes.io/part-of: zylvex
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    scrape_configs:
+      - job_name: 'auth-service'
+        static_configs:
+          - targets: ['auth-service.zylvex-production.svc.cluster.local:8001']
+
+      - job_name: 'spatial-canvas-backend'
+        static_configs:
+          - targets: ['spatial-canvas-backend.zylvex-production.svc.cluster.local:8000']
+
+      - job_name: 'mind-mapper-backend'
+        static_configs:
+          - targets: ['mind-mapper-backend.zylvex-production.svc.cluster.local:8002']
+
+      - job_name: 'social-service'
+        static_configs:
+          - targets: ['social-service.zylvex-production.svc.cluster.local:8003']
+
+      - job_name: 'realtime-gateway'
+        static_configs:
+          - targets: ['realtime-gateway.zylvex-production.svc.cluster.local:8004']
+
+      - job_name: 'notifications-service'
+        static_configs:
+          - targets: ['notifications-service.zylvex-production.svc.cluster.local:8005']
+
+      - job_name: 'web-app'
+        static_configs:
+          - targets: ['web-app.zylvex-production.svc.cluster.local:80']
+        metrics_path: /metrics
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: zylvex-production
+  labels:
+    app: prometheus
+    app.kubernetes.io/part-of: zylvex
+spec:
+  type: ClusterIP
+  selector:
+    app: prometheus
+  ports:
+    - port: 9090
+      targetPort: 9090
+      protocol: TCP
+      name: http

@@ -1,0 +1,17 @@
+# Standalone PVC for PostgreSQL (alternative to volumeClaimTemplate in StatefulSet)
+# This PVC is provided for reference if you prefer to manage storage separately.
+# The StatefulSet already includes a volumeClaimTemplate that creates PVCs automatically.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data-standalone
+  namespace: zylvex-production
+  labels:
+    app: postgres
+    app.kubernetes.io/part-of: zylvex
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi

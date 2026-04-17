@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: zylvex-production
+  labels:
+    app: redis
+    app.kubernetes.io/part-of: zylvex
+spec:
+  type: ClusterIP
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+      protocol: TCP
+      name: redis

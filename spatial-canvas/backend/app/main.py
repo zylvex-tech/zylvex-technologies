@@ -67,4 +67,4 @@ def read_root():
 @app.get("/health")
 def health_check():
     """Health check endpoint."""
-    return {"status": "healthy"}
+    return {"status": "ok", "service": "spatial-canvas-backend"}

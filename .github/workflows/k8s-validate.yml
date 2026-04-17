@@ -1,0 +1,47 @@
+name: Kubernetes Manifest Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'infrastructure/kubernetes/**'
+
+jobs:
+  validate-manifests:
+    name: Validate K8s Manifests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install kubeval
+        run: |
+          wget -q https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz
+          tar xf kubeval-linux-amd64.tar.gz
+          sudo mv kubeval /usr/local/bin/
+          kubeval --version
+
+      - name: Validate Kubernetes manifests
+        run: |
+          echo "Validating Kubernetes manifests..."
+          ERRORS=0
+
+          for file in $(find infrastructure/kubernetes -name '*.yml' -o -name '*.yaml' | grep -v scripts/ | grep -v README | sort); do
+            echo "  ✔ Validating $file"
+            if ! kubeval --strict --ignore-missing-schemas "$file"; then
+              echo "  ✘ FAILED: $file"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+
+          if [ "$ERRORS" -gt 0 ]; then
+            echo ""
+            echo "❌ $ERRORS manifest(s) failed validation."
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ All Kubernetes manifests are valid."

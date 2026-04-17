@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zylvex-app-config
+  namespace: zylvex-production
+  labels:
+    app.kubernetes.io/part-of: zylvex
+data:
+  # --- Auth Service ---
+  AUTH_SERVICE_URL: "http://auth-service.zylvex-production.svc.cluster.local:8001"
+  JWT_ALGORITHM: "HS256"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "15"
+  REFRESH_TOKEN_EXPIRE_DAYS: "30"
+  BCRYPT_ROUNDS: "12"
+
+  # --- Spatial Canvas ---
+  SPATIAL_CANVAS_URL: "http://spatial-canvas-backend.zylvex-production.svc.cluster.local:8000"
+
+  # --- Mind Mapper ---
+  MIND_MAPPER_PORT: "8002"
+
+  # --- Realtime Gateway ---
+  REDIS_URL: "redis://redis.zylvex-production.svc.cluster.local:6379"
+  HEARTBEAT_INTERVAL: "30"
+
+  # --- Notifications ---
+  REALTIME_SERVICE_URL: "http://realtime-gateway.zylvex-production.svc.cluster.local:8004"
+  EMAIL_FROM: "noreply@zylvex.com"
+  EMAIL_FROM_NAME: "Zylvex"
+
+  # --- Shared ---
+  ALLOWED_ORIGINS: "https://zylvex.com,https://www.zylvex.com"
