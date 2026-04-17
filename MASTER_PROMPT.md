@@ -49,6 +49,7 @@ scripts/                       cleanup-tokens.sh
 scripts/sandbox/               Developer sandbox: seed.py CLI, demo.py launcher, notebook data generator
 docs-site/                     Docusaurus v3 (TypeScript) documentation hub, port 3001
 docker-compose.full-stack.yml  One-command local stack (6 app services + 5 DBs + Redis + web-app + docs)
+SECURITY.md                    Responsible disclosure policy (security@zylvex.com)
 ```
 
 ---
@@ -65,8 +66,10 @@ docker-compose.full-stack.yml  One-command local stack (6 app services + 5 DBs +
 - **Spatial Canvas mobile**: camera view with crosshair, tap-to-place anchor with GPS, nearby anchors list, auth screens
 - **Web App**: React 18 + Vite + TypeScript + TailwindCSS + Framer Motion at `/web-app/`. Landing page (animated gradient, product cards, waitlist form), auth pages (/login, /register, /forgot-password), dashboard with sidebar, Mind Mapper canvas (**Sprint 2**: full ReactFlow canvas at `/mind-mapper/:mapId` — glassmorphism nodes, animated gradient edges, minimap, FAB drawer, inline edit, drag-to-save, focus overlay, PNG+JSON export, dark/light mode), Spatial Canvas react-leaflet map with anchor pins + detail drawer, social feed skeleton, full typed API client, Dockerfile + nginx, CI in pr-checks.yml. **Sprint 3**: NotificationsContext (WebSocket to realtime gateway, toast on events), notification bell icon in AppShell top bar with unread count badge, dropdown showing last 10 notifications with mark-read.
 - **Jupyter Notebooks**: Six production-quality notebooks at `/docs/notebooks/`. **Visualization Sprint** (latest): `spatial_canvas_3d.ipynb` (200 anchors across 4 cities — Folium clustered map, 3D Plotly scatter, animated timeline, analytics charts, ipywidgets sandbox), `mind_map_3d.ipynb` (25-node hierarchical tree — NetworkX 3D spring/circular/kamada_kawai layout, focus-colored Plotly 3D network, session timeline, BCI heatmap, interactive sandbox), `bci_focus_analysis.ipynb` (5 BCI sessions × 600 pts — multi-session overlay, rolling average + SciPy peak detection, 3D surface, violin plots, focus-vs-creation correlation with regression, sandbox). All use `plotly_dark` theme, export standalone HTML to `exports/`. Legacy notebooks also preserved. `requirements.txt` + `README.md` included.
-- **CI/CD**: 6 GitHub Actions workflows + web-app CI in pr-checks.yml, Codecov integration, staging SSH deploy
+- **SECURITY.md**: Responsible disclosure policy at root. Contact security@zylvex.com. 48h ack, 5-day triage, 30-day fix for critical/high. Scope: all services, web app, mobile apps, infra.
+- **CI/CD**: 7 GitHub Actions workflows (6 CI + `update-repo-meta.yml` for repo presentation) + web-app CI in pr-checks.yml, Codecov integration, staging SSH deploy
 - **Docker Compose full-stack**: 6 app services + 5 DBs + Redis + web-app + docs-site with healthchecks, shared network
+- **README.md**: World-class investor-grade README with hero section, two-product table, Mermaid architecture diagram, 3-command quick start, screenshot placeholders, notebook previews, CI badges, and phased roadmap with checkboxes.
 - **Documentation site**: Docusaurus v3 (TypeScript) at `/docs-site/`, port 3001. Custom Zylvex theme (navy #1B2A4A, accent #6C63FF). Sections: getting-started (introduction, quickstart, architecture-overview with Mermaid), api-reference (auth, spatial-canvas, mind-mapper, social), guides (mobile-setup, database-migrations, testing-guide, contributing), business (product-vision, roadmap with Mermaid Gantt, monetization, competitive-analysis with Mermaid quadrant). Algolia DocSearch config stub. Dockerfile + nginx on port 3001.
 - **Developer Sandbox**: `/scripts/sandbox/` with `seed.py` (argparse CLI — `users`, `anchors`, `mindmaps`, `all --reset` subcommands), `demo.py` (one-command seeder + summary table + curl test commands), `generate_notebook_data.py` (exports anchors, mindmap tree, BCI sessions, users as JSON to `docs/notebooks/data/`). Uses Faker for realistic data, Rich for formatted output. Anchors span 5 African + 3 global cities. Mind maps use 4 topic templates with hierarchical node trees. State tracked in `seed_state.json`. `requirements.txt` + `README.md` included.
 
@@ -127,6 +130,7 @@ tests/
 | `mobile-ci.yml` | push/PR on `spatial-canvas/mobile/**` | npm install, lint, type-check |
 | `pr-checks.yml` | all PRs to `main` | enforce non-empty description, branch naming, post analysis comment |
 | `deploy-staging.yml` | push to `main` (non-md/txt) | SSH deploy auth → spatial → mm in sequence; Slack notify |
+| `update-repo-meta.yml` | workflow_dispatch (manual) | Sets repo description, homepage, and topics via GitHub REST API |
 
 Branch conventions: `feature/*`, `bugfix/*`, `fix/*`, `release/*`, `chore/*`, `copilot/*`
 Commit format: Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`)
