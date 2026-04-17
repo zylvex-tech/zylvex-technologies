@@ -87,8 +87,10 @@ class TestWebApp:
         submit.click()
 
         # Wait for navigation (dashboard or login page)
-        page.wait_for_timeout(3000)
-        assert "/login" in page.url or "/dashboard" in page.url or "/register" in page.url
+        page.wait_for_url(
+            lambda url: "/login" in url or "/dashboard" in url or "/register" in url,
+            timeout=5000,
+        )
 
     # 4 ── Dashboard renders with user name
     def test_dashboard_renders(self, page):

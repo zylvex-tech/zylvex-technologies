@@ -37,10 +37,10 @@ groups:
 
       - alert: HighMemoryUsage
         expr: >
-          (process_resident_memory_bytes / on(instance) machine_memory_bytes) > 0.85
+          (process_resident_memory_bytes / (1024 * 1024 * 1024)) > 0.85
         for: 5m
         labels:
           severity: warning
         annotations:
           summary: "High memory usage on {{ $labels.job }}"
-          description: "Service {{ $labels.job }} instance {{ $labels.instance }} is using more than 85% of available memory."
+          description: "Service {{ $labels.job }} instance {{ $labels.instance }} resident memory exceeds 850 MB."
