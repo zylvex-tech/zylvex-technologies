@@ -1,0 +1,11 @@
+# E2E test dependencies
+httpx>=0.25,<0.28
+pytest>=7.4,<9
+pytest-playwright>=0.4,<1
+playwright>=1.42,<2
+
+# Load testing
+locust>=2.20,<3
+
+# Utilities
+python-dotenv>=1.0,<2
