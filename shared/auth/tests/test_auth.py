@@ -1,4 +1,4 @@
-"""Comprehensive auth service test suite (27 test cases)."""
+"""Comprehensive auth service test suite (28 test cases)."""
 
 import os
 import time

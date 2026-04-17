@@ -6,13 +6,10 @@ Falls back to console logging when SENDGRID_API_KEY is not set.
 """
 
 import logging
-import os
+
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
-
-SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
-EMAIL_FROM = os.getenv("EMAIL_FROM", "noreply@zylvex.io")
-EMAIL_FROM_NAME = os.getenv("EMAIL_FROM_NAME", "Zylvex")
 
 
 def _build_html(title: str, body: str, cta_text: str, cta_url: str) -> str:
@@ -104,9 +101,9 @@ def _send_via_sendgrid(to_email: str, subject: str, html_content: str) -> bool:
         import sendgrid
         from sendgrid.helpers.mail import Mail, Email, To, Content
 
-        sg = sendgrid.SendGridAPIClient(api_key=SENDGRID_API_KEY)
+        sg = sendgrid.SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
         message = Mail(
-            from_email=Email(EMAIL_FROM, EMAIL_FROM_NAME),
+            from_email=Email(settings.EMAIL_FROM, settings.EMAIL_FROM_NAME),
             to_emails=To(to_email),
             subject=subject,
             html_content=Content("text/html", html_content),
@@ -128,7 +125,7 @@ def _send_email(to_email: str, subject: str, html_content: str) -> bool:
     """
     Send email via SendGrid if configured, otherwise log to console (dev mode).
     """
-    if not SENDGRID_API_KEY:
+    if not settings.SENDGRID_API_KEY:
         logger.info(
             "[DEV MODE] Email not sent (SENDGRID_API_KEY not set).\n"
             "  To: %s\n  Subject: %s\n  Body preview: %s...",

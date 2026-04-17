@@ -2,6 +2,7 @@
 
 import os
 import logging
+import re
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from sqlalchemy.orm import Session
@@ -28,6 +29,18 @@ ALLOWED_MIME_PREFIXES = {
     "video": "video/",
     "audio": "audio/",
 }
+
+
+def _sanitize_filename(filename: str) -> str:
+    """Sanitize uploaded filename to prevent path traversal attacks."""
+    # Strip directory components
+    filename = os.path.basename(filename)
+    # Remove any non-alphanumeric characters except dots, hyphens, underscores
+    filename = re.sub(r"[^\w.\-]", "_", filename)
+    # Ensure non-empty
+    if not filename or filename.startswith("."):
+        filename = "upload"
+    return filename
 
 
 @router.post(
@@ -97,7 +110,8 @@ async def upload_anchor_media(
     media_dir = os.path.join(settings.MEDIA_STORAGE_PATH, str(anchor_id))
     os.makedirs(media_dir, exist_ok=True)
 
-    filename = file.filename or f"upload.{anchor.content_type}"
+    raw_filename = file.filename or f"upload.{anchor.content_type}"
+    filename = _sanitize_filename(raw_filename)
     file_path = os.path.join(media_dir, filename)
 
     with open(file_path, "wb") as f:

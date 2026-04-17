@@ -65,15 +65,17 @@ def downgrade() -> None:
 
     op.add_column(
         "anchors",
-        sa.Column(
-            "location_geo",
-            sa.Column("location_geo", sa.Text),  # placeholder for Geometry
-            nullable=True,
-        ),
+        sa.Column("location_old", sa.Text, nullable=True),
     )
-    op.execute("UPDATE anchors SET location_geo = location::geometry")
+    op.execute(
+        "UPDATE anchors SET location_old = ST_AsText(location::geometry)"
+    )
     op.drop_column("anchors", "location")
-    op.alter_column("anchors", "location_geo", new_column_name="location")
+    op.alter_column("anchors", "location_old", new_column_name="location")
+    op.execute(
+        "ALTER TABLE anchors ALTER COLUMN location TYPE geometry(Point, 4326) "
+        "USING ST_GeomFromText(location, 4326)"
+    )
     op.alter_column("anchors", "location", nullable=False)
     op.execute(
         "CREATE INDEX idx_anchors_location ON anchors USING GIST(location)"
