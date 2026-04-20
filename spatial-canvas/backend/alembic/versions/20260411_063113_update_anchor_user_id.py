@@ -1,10 +1,11 @@
 """update anchor user_id
 
 Revision ID: update_anchor_user_id
-Revises: 
+Revises:
 Create Date: 2024-04-11 07:30:00.000000
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
